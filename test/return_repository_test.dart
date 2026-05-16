@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:highbrid_pos/data/db/app_database.dart';
 import 'package:highbrid_pos/data/db/seed.dart';
+import 'package:highbrid_pos/data/repositories/report_repository.dart';
 import 'package:highbrid_pos/data/repositories/return_repository.dart';
 import 'package:highbrid_pos/data/repositories/sale_repository.dart';
 import 'package:highbrid_pos/data/repositories/shift_repository.dart';
@@ -243,6 +244,30 @@ void main() {
 
     expect(first.referenceNo, endsWith('-0001'));
     expect(second.referenceNo, endsWith('-0002'));
+  });
+
+  test('dailySummary reports the day\'s return count and refund total',
+      () async {
+    final view = (await repo.findSaleForReturn(sale.referenceNo))!;
+    final riceLine = view.lines.firstWhere((l) => l.productId == rice.id);
+
+    // Before any return: no refunds for the day.
+    final before = await ReportRepository(db).dailySummary(DateTime.now());
+    expect(before.returnCount, 0);
+    expect(before.refundTotal, 0);
+
+    final record = await repo.recordReturn(
+      originalSaleId: sale.id,
+      cashierId: 1,
+      shiftId: shift.id,
+      reason: 'damaged',
+      approvedBy: 1,
+      selectedLines: [riceLine.copyWith(selectedQty: 2)],
+    );
+
+    final after = await ReportRepository(db).dailySummary(DateTime.now());
+    expect(after.returnCount, 1);
+    expect(after.refundTotal, record.refundTotal); // 1044
   });
 
   test('getReturn returns the persisted record with its lines', () async {

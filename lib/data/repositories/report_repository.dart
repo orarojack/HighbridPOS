@@ -25,12 +25,23 @@ class ReportRepository {
       taxTotal += s.taxTotal;
       total += s.total;
     }
+    final returns = await (_db.select(_db.returns)
+          ..where((r) =>
+              r.createdAt.isBiggerOrEqualValue(start) &
+              r.createdAt.isSmallerThanValue(end)))
+        .get();
+    var refundTotal = 0;
+    for (final r in returns) {
+      refundTotal += r.refundTotal;
+    }
     return DailySummary(
       day: start,
       saleCount: sales.length,
       subtotal: subtotal,
       taxTotal: taxTotal,
       total: total,
+      returnCount: returns.length,
+      refundTotal: refundTotal,
     );
   }
 }

@@ -266,6 +266,7 @@ class Shift {
   final int cashSalesTotal; // cents
   final int payInTotal; // cents
   final int payOutTotal; // cents
+  final int refundTotal; // cents — cash refunded out of the drawer
   final int? expectedCash; // cents
   final int? countedCash; // cents
   final int? variance; // cents
@@ -283,6 +284,7 @@ class Shift {
     required this.cashSalesTotal,
     required this.payInTotal,
     required this.payOutTotal,
+    required this.refundTotal,
     required this.expectedCash,
     required this.countedCash,
     required this.variance,
@@ -304,6 +306,7 @@ class Shift {
           cashSalesTotal == other.cashSalesTotal &&
           payInTotal == other.payInTotal &&
           payOutTotal == other.payOutTotal &&
+          refundTotal == other.refundTotal &&
           expectedCash == other.expectedCash &&
           countedCash == other.countedCash &&
           variance == other.variance &&
@@ -322,6 +325,7 @@ class Shift {
         cashSalesTotal,
         payInTotal,
         payOutTotal,
+        refundTotal,
         expectedCash,
         countedCash,
         variance,
@@ -613,13 +617,17 @@ class ReturnRecord {
       );
 }
 
-/// Daily aggregate for the summary screen.
+/// Daily aggregate for the summary screen. The sale fields
+/// ([subtotal]/[taxTotal]/[total]) keep their sale meaning; refunds are
+/// reported separately via [returnCount] and [refundTotal].
 class DailySummary {
   final DateTime day;
   final int saleCount;
   final int subtotal;
   final int taxTotal;
   final int total;
+  final int returnCount;
+  final int refundTotal; // cents — sum of refunds for the day
 
   const DailySummary({
     required this.day,
@@ -627,6 +635,8 @@ class DailySummary {
     required this.subtotal,
     required this.taxTotal,
     required this.total,
+    required this.returnCount,
+    required this.refundTotal,
   });
 
   @override
@@ -637,8 +647,11 @@ class DailySummary {
           saleCount == other.saleCount &&
           subtotal == other.subtotal &&
           taxTotal == other.taxTotal &&
-          total == other.total);
+          total == other.total &&
+          returnCount == other.returnCount &&
+          refundTotal == other.refundTotal);
 
   @override
-  int get hashCode => Object.hash(day, saleCount, subtotal, taxTotal, total);
+  int get hashCode => Object.hash(
+      day, saleCount, subtotal, taxTotal, total, returnCount, refundTotal);
 }

@@ -162,6 +162,7 @@ class ShiftRepository {
         cashSales: row.cashSalesTotal,
         payIn: row.payInTotal,
         payOut: row.payOutTotal,
+        refunds: row.refundTotal,
       );
       final variance = cashVariance(counted: countedCash, expected: expected);
       await (_db.update(_db.shifts)..where((s) => s.id.equals(shiftId))).write(
@@ -229,6 +230,7 @@ class ShiftRepository {
         cashSalesTotal: row.cashSalesTotal,
         payInTotal: row.payInTotal,
         payOutTotal: row.payOutTotal,
+        refundTotal: row.refundTotal,
         expectedCash: row.expectedCash,
         countedCash: row.countedCash,
         variance: row.variance,

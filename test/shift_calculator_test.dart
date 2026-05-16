@@ -4,12 +4,34 @@ import 'package:highbrid_pos/domain/shift_calculator.dart';
 void main() {
   test('expectedCash sums float, cash sales, pay-ins minus pay-outs', () {
     expect(
-      expectedCash(openingFloat: 5000, cashSales: 42000, payIn: 0, payOut: 0),
+      expectedCash(
+          openingFloat: 5000,
+          cashSales: 42000,
+          payIn: 0,
+          payOut: 0,
+          refunds: 0),
       47000,
     );
     expect(
-      expectedCash(openingFloat: 5000, cashSales: 42000, payIn: 1000, payOut: 500),
+      expectedCash(
+          openingFloat: 5000,
+          cashSales: 42000,
+          payIn: 1000,
+          payOut: 500,
+          refunds: 0),
       47500,
+    );
+  });
+
+  test('expectedCash subtracts refunds paid out of the drawer', () {
+    expect(
+      expectedCash(
+          openingFloat: 5000,
+          cashSales: 42000,
+          payIn: 1000,
+          payOut: 500,
+          refunds: 1500),
+      46000,
     );
   });
 
