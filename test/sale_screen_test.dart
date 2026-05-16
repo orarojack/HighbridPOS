@@ -129,11 +129,10 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Complete sale'));
     await tester.pumpAndSettle();
 
-    // A receipt confirmation dialog appears after completion; dismiss it.
-    if (find.text('Close').evaluate().isNotEmpty) {
-      await tester.tap(find.text('Close'));
-      await tester.pumpAndSettle();
-    }
+    // A receipt dialog appears after completion; verify it, then dismiss it.
+    expect(find.text('Done'), findsOneWidget);
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
 
     // The sale was persisted to the in-memory database.
     final sales = await db.select(db.sales).get();
