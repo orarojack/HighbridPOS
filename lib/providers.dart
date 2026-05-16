@@ -6,6 +6,7 @@ import 'data/repositories/auth_repository.dart';
 import 'data/repositories/product_repository.dart';
 import 'data/repositories/report_repository.dart';
 import 'data/repositories/sale_repository.dart';
+import 'data/repositories/shift_repository.dart';
 
 /// Overridden in main() with the opened database instance.
 final databaseProvider = Provider<AppDatabase>(
@@ -26,4 +27,8 @@ final saleRepositoryProvider = Provider<SaleRepository>(
 
 final reportRepositoryProvider = Provider<ReportRepository>(
   (ref) => ReportRepository(ref.watch(databaseProvider)),
+);
+
+final shiftRepositoryProvider = Provider<ShiftRepository>(
+  (ref) => ShiftRepository(ref.watch(databaseProvider)),
 );
