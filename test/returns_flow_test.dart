@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:highbrid_pos/data/db/app_database.dart';
 import 'package:highbrid_pos/data/db/seed.dart';
+import 'package:highbrid_pos/data/repositories/return_repository.dart';
 import 'package:highbrid_pos/data/repositories/sale_repository.dart';
 import 'package:highbrid_pos/domain/models.dart';
 import 'package:highbrid_pos/features/auth/auth_controller.dart';
@@ -312,5 +313,48 @@ void main() {
     // Nothing was recorded and no receipt is shown.
     expect(await fx.db.select(fx.db.returns).get(), isEmpty);
     expect(find.text('RETURN / REFUND'), findsNothing);
+  });
+
+  testWidgets(
+      'a sale with every line fully returned shows "Nothing left to return"'
+      ' and the Record button is not actionable',
+      (tester) async {
+    _useDesktopViewport(tester);
+    final fx = await _setUp(tester);
+
+    // Fully return all lines of the sale directly via the repository.
+    final repo = ReturnRepository(fx.db);
+    final draft = (await repo.findSaleForReturn(fx.sale.referenceNo))!;
+    await repo.recordReturn(
+      originalSaleId: fx.sale.id,
+      cashierId: 2,
+      shiftId: fx.container.read(shiftControllerProvider).valueOrNull!.id,
+      reason: 'full return',
+      approvedBy: 1,
+      selectedLines: draft.lines
+          .map((l) => l.copyWith(selectedQty: l.returnableQty))
+          .toList(),
+    );
+
+    // Now look up the same sale on the select screen.
+    await tester.pumpWidget(
+        _host(fx.container, const ReturnsLookupScreen()));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Sale reference number'),
+        fx.sale.referenceNo);
+    await tester.tap(find.widgetWithText(FilledButton, 'Find sale'));
+    await tester.pumpAndSettle();
+
+    // The "Nothing left to return" message must be visible and include the
+    // sale reference.
+    expect(find.textContaining('Nothing left to return'), findsOneWidget);
+    expect(find.textContaining(fx.sale.referenceNo), findsWidgets);
+
+    // The Record return button must be disabled (onPressed is null).
+    final recordBtn = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Record return'));
+    expect(recordBtn.onPressed, isNull);
   });
 }

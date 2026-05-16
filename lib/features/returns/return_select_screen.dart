@@ -105,6 +105,8 @@ class _ReturnSelectScreenState extends ConsumerState<ReturnSelectScreen> {
 
   Widget _buildSelectUi(BuildContext context, ReturnDraft draft) {
     final controller = ref.read(returnControllerProvider.notifier);
+    final fullyReturned = draft.lines.isNotEmpty &&
+        draft.lines.every((l) => l.returnableQty == 0);
 
     return Scaffold(
       appBar: AppBar(
@@ -112,6 +114,41 @@ class _ReturnSelectScreenState extends ConsumerState<ReturnSelectScreen> {
       ),
       body: Column(
         children: [
+          if (fullyReturned)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Card(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSecondaryContainer,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Nothing left to return — sale '
+                          '${draft.originalReference} has been fully returned.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSecondaryContainer,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
