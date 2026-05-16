@@ -5,6 +5,7 @@ import 'data/db/app_database.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/product_repository.dart';
 import 'data/repositories/report_repository.dart';
+import 'data/repositories/return_repository.dart';
 import 'data/repositories/sale_repository.dart';
 import 'data/repositories/shift_repository.dart';
 
@@ -31,4 +32,8 @@ final reportRepositoryProvider = Provider<ReportRepository>(
 
 final shiftRepositoryProvider = Provider<ShiftRepository>(
   (ref) => ShiftRepository(ref.watch(databaseProvider)),
+);
+
+final returnRepositoryProvider = Provider<ReturnRepository>(
+  (ref) => ReturnRepository(ref.watch(databaseProvider)),
 );
