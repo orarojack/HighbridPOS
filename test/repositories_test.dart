@@ -1,0 +1,94 @@
+// test/repositories_test.dart
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:highbrid_pos/data/db/app_database.dart';
+import 'package:highbrid_pos/data/db/seed.dart';
+import 'package:highbrid_pos/data/repositories/auth_repository.dart';
+import 'package:highbrid_pos/data/repositories/product_repository.dart';
+import 'package:highbrid_pos/data/repositories/report_repository.dart';
+import 'package:highbrid_pos/data/repositories/sale_repository.dart';
+import 'package:highbrid_pos/domain/models.dart';
+
+void main() {
+  late AppDatabase db;
+
+  setUp(() async {
+    db = AppDatabase(NativeDatabase.memory());
+    await seedIfEmpty(db);
+  });
+
+  tearDown(() async => db.close());
+
+  test('seed creates an admin user and sample products', () async {
+    final products = await ProductRepository(db).allProducts();
+    expect(products.length, 4);
+    final auth = await AuthRepository(db).login('admin', 'admin123');
+    expect(auth, isNotNull);
+    expect(auth!.role.canManageProducts, isTrue);
+  });
+
+  test('login rejects a wrong password', () async {
+    expect(await AuthRepository(db).login('admin', 'wrong'), isNull);
+  });
+
+  test('search finds a product by barcode and by name substring', () async {
+    final repo = ProductRepository(db);
+    expect((await repo.search('1000000000017')).single.name, 'White Bread 400g');
+    expect((await repo.search('cola')).single.sku, 'DRK-001');
+  });
+
+  test('completeCashSale records the sale and deducts stock', () async {
+    final products = ProductRepository(db);
+    final cola = (await products.search('cola')).single;
+    final before = cola.stockQty;
+
+    final sale = await SaleRepository(db).completeCashSale(
+      cashierId: 1,
+      lines: [CartLine(product: cola, qty: 3)],
+      tendered: 1000,
+    );
+
+    expect(sale.referenceNo, matches(r'^\d{8}-0001$'));
+    expect(sale.total, 348); // 3 * 100 = 300 subtotal, +48 tax (16%)
+    expect(sale.changeDue, 652);
+
+    final after = await products.getById(cola.id);
+    expect(after.stockQty, before - 3);
+  });
+
+  test('completeCashSale throws when stock is insufficient', () async {
+    final products = ProductRepository(db);
+    final cola = (await products.search('cola')).single;
+    expect(
+      () => SaleRepository(db).completeCashSale(
+        cashierId: 1,
+        lines: [CartLine(product: cola, qty: cola.stockQty + 1)],
+        tendered: 100000,
+      ),
+      throwsA(isA<InsufficientStockException>()),
+    );
+  });
+
+  test('sale references increment per day', () async {
+    final products = ProductRepository(db);
+    final water = (await products.search('water')).single;
+    final repo = SaleRepository(db);
+    final s1 = await repo.completeCashSale(
+        cashierId: 1, lines: [CartLine(product: water, qty: 1)], tendered: 100);
+    final s2 = await repo.completeCashSale(
+        cashierId: 1, lines: [CartLine(product: water, qty: 1)], tendered: 100);
+    expect(s1.referenceNo.endsWith('-0001'), isTrue);
+    expect(s2.referenceNo.endsWith('-0002'), isTrue);
+  });
+
+  test('dailySummary aggregates today\'s sales', () async {
+    final products = ProductRepository(db);
+    final water = (await products.search('water')).single;
+    await SaleRepository(db).completeCashSale(
+        cashierId: 1, lines: [CartLine(product: water, qty: 2)], tendered: 200);
+
+    final summary = await ReportRepository(db).dailySummary(DateTime.now());
+    expect(summary.saleCount, 1);
+    expect(summary.total, 120); // 2 * 60, no tax
+  });
+}

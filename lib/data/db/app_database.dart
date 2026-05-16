@@ -13,11 +13,13 @@ class Users extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
+@DataClassName('CategoryData')
 class Categories extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().unique()();
 }
 
+@DataClassName('ProductData')
 class Products extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get sku => text().unique()();

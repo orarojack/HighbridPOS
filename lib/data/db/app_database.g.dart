@@ -458,7 +458,7 @@ class UsersCompanion extends UpdateCompanion<User> {
 }
 
 class $CategoriesTable extends Categories
-    with TableInfo<$CategoriesTable, Category> {
+    with TableInfo<$CategoriesTable, CategoryData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -495,7 +495,7 @@ class $CategoriesTable extends Categories
   static const String $name = 'categories';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Category> instance, {
+    Insertable<CategoryData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -517,9 +517,9 @@ class $CategoriesTable extends Categories
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Category map(Map<String, dynamic> data, {String? tablePrefix}) {
+  CategoryData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Category(
+    return CategoryData(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -537,10 +537,10 @@ class $CategoriesTable extends Categories
   }
 }
 
-class Category extends DataClass implements Insertable<Category> {
+class CategoryData extends DataClass implements Insertable<CategoryData> {
   final int id;
   final String name;
-  const Category({required this.id, required this.name});
+  const CategoryData({required this.id, required this.name});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -553,12 +553,12 @@ class Category extends DataClass implements Insertable<Category> {
     return CategoriesCompanion(id: Value(id), name: Value(name));
   }
 
-  factory Category.fromJson(
+  factory CategoryData.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Category(
+    return CategoryData(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
     );
@@ -572,10 +572,10 @@ class Category extends DataClass implements Insertable<Category> {
     };
   }
 
-  Category copyWith({int? id, String? name}) =>
-      Category(id: id ?? this.id, name: name ?? this.name);
-  Category copyWithCompanion(CategoriesCompanion data) {
-    return Category(
+  CategoryData copyWith({int? id, String? name}) =>
+      CategoryData(id: id ?? this.id, name: name ?? this.name);
+  CategoryData copyWithCompanion(CategoriesCompanion data) {
+    return CategoryData(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
     );
@@ -583,7 +583,7 @@ class Category extends DataClass implements Insertable<Category> {
 
   @override
   String toString() {
-    return (StringBuffer('Category(')
+    return (StringBuffer('CategoryData(')
           ..write('id: $id, ')
           ..write('name: $name')
           ..write(')'))
@@ -595,10 +595,10 @@ class Category extends DataClass implements Insertable<Category> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Category && other.id == this.id && other.name == this.name);
+      (other is CategoryData && other.id == this.id && other.name == this.name);
 }
 
-class CategoriesCompanion extends UpdateCompanion<Category> {
+class CategoriesCompanion extends UpdateCompanion<CategoryData> {
   final Value<int> id;
   final Value<String> name;
   const CategoriesCompanion({
@@ -609,7 +609,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.id = const Value.absent(),
     required String name,
   }) : name = Value(name);
-  static Insertable<Category> custom({
+  static Insertable<CategoryData> custom({
     Expression<int>? id,
     Expression<String>? name,
   }) {
@@ -645,7 +645,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   }
 }
 
-class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
+class $ProductsTable extends Products
+    with TableInfo<$ProductsTable, ProductData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -840,7 +841,7 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   static const String $name = 'products';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Product> instance, {
+    Insertable<ProductData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -944,9 +945,9 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Product map(Map<String, dynamic> data, {String? tablePrefix}) {
+  ProductData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Product(
+    return ProductData(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -1012,7 +1013,7 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   }
 }
 
-class Product extends DataClass implements Insertable<Product> {
+class ProductData extends DataClass implements Insertable<ProductData> {
   final int id;
   final String sku;
   final String? barcode;
@@ -1027,7 +1028,7 @@ class Product extends DataClass implements Insertable<Product> {
   final bool active;
   final DateTime createdAt;
   final DateTime updatedAt;
-  const Product({
+  const ProductData({
     required this.id,
     required this.sku,
     this.barcode,
@@ -1090,12 +1091,12 @@ class Product extends DataClass implements Insertable<Product> {
     );
   }
 
-  factory Product.fromJson(
+  factory ProductData.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Product(
+    return ProductData(
       id: serializer.fromJson<int>(json['id']),
       sku: serializer.fromJson<String>(json['sku']),
       barcode: serializer.fromJson<String?>(json['barcode']),
@@ -1133,7 +1134,7 @@ class Product extends DataClass implements Insertable<Product> {
     };
   }
 
-  Product copyWith({
+  ProductData copyWith({
     int? id,
     String? sku,
     Value<String?> barcode = const Value.absent(),
@@ -1148,7 +1149,7 @@ class Product extends DataClass implements Insertable<Product> {
     bool? active,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) => Product(
+  }) => ProductData(
     id: id ?? this.id,
     sku: sku ?? this.sku,
     barcode: barcode.present ? barcode.value : this.barcode,
@@ -1164,8 +1165,8 @@ class Product extends DataClass implements Insertable<Product> {
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
-  Product copyWithCompanion(ProductsCompanion data) {
-    return Product(
+  ProductData copyWithCompanion(ProductsCompanion data) {
+    return ProductData(
       id: data.id.present ? data.id.value : this.id,
       sku: data.sku.present ? data.sku.value : this.sku,
       barcode: data.barcode.present ? data.barcode.value : this.barcode,
@@ -1191,7 +1192,7 @@ class Product extends DataClass implements Insertable<Product> {
 
   @override
   String toString() {
-    return (StringBuffer('Product(')
+    return (StringBuffer('ProductData(')
           ..write('id: $id, ')
           ..write('sku: $sku, ')
           ..write('barcode: $barcode, ')
@@ -1230,7 +1231,7 @@ class Product extends DataClass implements Insertable<Product> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Product &&
+      (other is ProductData &&
           other.id == this.id &&
           other.sku == this.sku &&
           other.barcode == this.barcode &&
@@ -1247,7 +1248,7 @@ class Product extends DataClass implements Insertable<Product> {
           other.updatedAt == this.updatedAt);
 }
 
-class ProductsCompanion extends UpdateCompanion<Product> {
+class ProductsCompanion extends UpdateCompanion<ProductData> {
   final Value<int> id;
   final Value<String> sku;
   final Value<String?> barcode;
@@ -1296,7 +1297,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   }) : sku = Value(sku),
        name = Value(name),
        sellPrice = Value(sellPrice);
-  static Insertable<Product> custom({
+  static Insertable<ProductData> custom({
     Expression<int>? id,
     Expression<String>? sku,
     Expression<String>? barcode,
@@ -3790,12 +3791,11 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
     CategoriesCompanion Function({Value<int> id, Value<String> name});
 
 final class $$CategoriesTableReferences
-    extends BaseReferences<_$AppDatabase, $CategoriesTable, Category> {
+    extends BaseReferences<_$AppDatabase, $CategoriesTable, CategoryData> {
   $$CategoriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static MultiTypedResultKey<$ProductsTable, List<Product>> _productsRefsTable(
-    _$AppDatabase db,
-  ) => MultiTypedResultKey.fromTable(
+  static MultiTypedResultKey<$ProductsTable, List<ProductData>>
+  _productsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.products,
     aliasName: $_aliasNameGenerator(db.categories.id, db.products.categoryId),
   );
@@ -3924,14 +3924,14 @@ class $$CategoriesTableTableManager
         RootTableManager<
           _$AppDatabase,
           $CategoriesTable,
-          Category,
+          CategoryData,
           $$CategoriesTableFilterComposer,
           $$CategoriesTableOrderingComposer,
           $$CategoriesTableAnnotationComposer,
           $$CategoriesTableCreateCompanionBuilder,
           $$CategoriesTableUpdateCompanionBuilder,
-          (Category, $$CategoriesTableReferences),
-          Category,
+          (CategoryData, $$CategoriesTableReferences),
+          CategoryData,
           PrefetchHooks Function({bool productsRefs})
         > {
   $$CategoriesTableTableManager(_$AppDatabase db, $CategoriesTable table)
@@ -3970,9 +3970,9 @@ class $$CategoriesTableTableManager
                 return [
                   if (productsRefs)
                     await $_getPrefetchedData<
-                      Category,
+                      CategoryData,
                       $CategoriesTable,
-                      Product
+                      ProductData
                     >(
                       currentTable: table,
                       referencedTable: $$CategoriesTableReferences
@@ -3999,14 +3999,14 @@ typedef $$CategoriesTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
       $CategoriesTable,
-      Category,
+      CategoryData,
       $$CategoriesTableFilterComposer,
       $$CategoriesTableOrderingComposer,
       $$CategoriesTableAnnotationComposer,
       $$CategoriesTableCreateCompanionBuilder,
       $$CategoriesTableUpdateCompanionBuilder,
-      (Category, $$CategoriesTableReferences),
-      Category,
+      (CategoryData, $$CategoriesTableReferences),
+      CategoryData,
       PrefetchHooks Function({bool productsRefs})
     >;
 typedef $$ProductsTableCreateCompanionBuilder =
@@ -4045,7 +4045,7 @@ typedef $$ProductsTableUpdateCompanionBuilder =
     });
 
 final class $$ProductsTableReferences
-    extends BaseReferences<_$AppDatabase, $ProductsTable, Product> {
+    extends BaseReferences<_$AppDatabase, $ProductsTable, ProductData> {
   $$ProductsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $CategoriesTable _categoryIdTable(_$AppDatabase db) =>
@@ -4484,14 +4484,14 @@ class $$ProductsTableTableManager
         RootTableManager<
           _$AppDatabase,
           $ProductsTable,
-          Product,
+          ProductData,
           $$ProductsTableFilterComposer,
           $$ProductsTableOrderingComposer,
           $$ProductsTableAnnotationComposer,
           $$ProductsTableCreateCompanionBuilder,
           $$ProductsTableUpdateCompanionBuilder,
-          (Product, $$ProductsTableReferences),
-          Product,
+          (ProductData, $$ProductsTableReferences),
+          ProductData,
           PrefetchHooks Function({
             bool categoryId,
             bool saleItemsRefs,
@@ -4629,7 +4629,7 @@ class $$ProductsTableTableManager
                     return [
                       if (saleItemsRefs)
                         await $_getPrefetchedData<
-                          Product,
+                          ProductData,
                           $ProductsTable,
                           SaleItem
                         >(
@@ -4650,7 +4650,7 @@ class $$ProductsTableTableManager
                         ),
                       if (stockMovementsRefs)
                         await $_getPrefetchedData<
-                          Product,
+                          ProductData,
                           $ProductsTable,
                           StockMovement
                         >(
@@ -4681,14 +4681,14 @@ typedef $$ProductsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
       $ProductsTable,
-      Product,
+      ProductData,
       $$ProductsTableFilterComposer,
       $$ProductsTableOrderingComposer,
       $$ProductsTableAnnotationComposer,
       $$ProductsTableCreateCompanionBuilder,
       $$ProductsTableUpdateCompanionBuilder,
-      (Product, $$ProductsTableReferences),
-      Product,
+      (ProductData, $$ProductsTableReferences),
+      ProductData,
       PrefetchHooks Function({
         bool categoryId,
         bool saleItemsRefs,
