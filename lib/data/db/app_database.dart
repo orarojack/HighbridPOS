@@ -49,6 +49,7 @@ class Sales extends Table {
   TextColumn get referenceNo => text().unique()();
   IntColumn get cashierId => integer().references(Users, #id)();
   IntColumn get subtotal => integer()();
+  IntColumn get discountTotal => integer().withDefault(const Constant(0))();
   IntColumn get taxTotal => integer()();
   IntColumn get total => integer()();
   TextColumn get status => text()();
@@ -64,6 +65,7 @@ class SaleItems extends Table {
   IntColumn get unitPrice => integer()();
   RealColumn get taxRate => real()();
   IntColumn get qty => integer()();
+  IntColumn get discount => integer().withDefault(const Constant(0))();
   IntColumn get lineTax => integer()();
   IntColumn get lineTotal => integer()();
 }
@@ -102,6 +104,7 @@ class ReturnItems extends Table {
   IntColumn get qty => integer()();
   IntColumn get unitPrice => integer()();
   RealColumn get taxRate => real()();
+  IntColumn get discount => integer().withDefault(const Constant(0))();
   IntColumn get lineTax => integer()();
   IntColumn get lineTotal => integer()();
 }
@@ -169,7 +172,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -224,6 +227,17 @@ class AppDatabase extends _$AppDatabase {
               'CREATE UNIQUE INDEX IF NOT EXISTS returns_reference_no_unique '
               'ON returns (reference_no)',
             );
+          }
+          if (from < 4) {
+            await m.addColumn(saleItems, saleItems.discount);
+            await m.addColumn(sales, sales.discountTotal);
+            // The return_items table is created by m.createTable in the
+            // from < 3 block above, already in its current v4 shape (with
+            // discount). Only ALTER it when it pre-dates this upgrade, i.e.
+            // came from an existing v3 database.
+            if (from >= 3) {
+              await m.addColumn(returnItems, returnItems.discount);
+            }
           }
         },
         beforeOpen: (details) async {

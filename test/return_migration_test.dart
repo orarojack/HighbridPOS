@@ -15,8 +15,8 @@ void main() {
 
     tearDown(() async => db.close());
 
-    test('schemaVersion is 3', () {
-      expect(db.schemaVersion, 3);
+    test('schemaVersion is 4', () {
+      expect(db.schemaVersion, 4);
     });
 
     test('a fresh v3 database has the returns and return_items tables',
@@ -179,6 +179,20 @@ void main() {
         'tendered INTEGER NOT NULL, '
         'change_due INTEGER NOT NULL, '
         "created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')))",
+      );
+      // sale_items existed in v2; the v3->v4 migration ALTERs it (discount),
+      // so it must be present for the chained 2->4 upgrade to succeed.
+      await v2.customStatement(
+        'CREATE TABLE sale_items ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'sale_id INTEGER NOT NULL REFERENCES sales (id), '
+        'product_id INTEGER NOT NULL REFERENCES products (id), '
+        'name_snapshot TEXT NOT NULL, '
+        'unit_price INTEGER NOT NULL, '
+        'tax_rate REAL NOT NULL, '
+        'qty INTEGER NOT NULL, '
+        'line_tax INTEGER NOT NULL, '
+        'line_total INTEGER NOT NULL)',
       );
       await v2.customStatement(
         'CREATE TABLE shifts ('
