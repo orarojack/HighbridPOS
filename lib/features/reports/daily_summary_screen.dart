@@ -45,6 +45,7 @@ class DailySummaryScreen extends ConsumerWidget {
                     const Divider(height: 24),
                     _row('Sales completed', s.saleCount.toString()),
                     _row('Subtotal', formatMoney(s.subtotal)),
+                    _row('Discounts given', formatMoney(s.discountTotal)),
                     _row('Tax collected', formatMoney(s.taxTotal)),
                     const Divider(height: 24),
                     _row('Total takings', formatMoney(s.total), bold: true),

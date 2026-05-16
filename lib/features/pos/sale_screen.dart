@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/sale_repository.dart';
+import '../../domain/discount_calculator.dart';
 import '../../domain/enums.dart';
 import '../../domain/models.dart';
 import '../../providers.dart';
@@ -12,6 +13,7 @@ import '../auth/auth_controller.dart';
 import '../shift/shift_controller.dart';
 import '../shift/start_shift_screen.dart';
 import 'cart_controller.dart';
+import 'discount_dialog.dart';
 import 'payment_dialog.dart';
 import 'receipt.dart';
 
@@ -325,6 +327,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
                 const Divider(height: 1),
                 _TotalsPanel(
                   subtotal: totals.subtotal,
+                  discountTotal: totals.discountTotal,
                   taxTotal: totals.taxTotal,
                   total: totals.total,
                 ),
@@ -489,12 +492,42 @@ class _CartTile extends ConsumerWidget {
   const _CartTile({required this.line});
   final CartLine line;
 
+  /// Opens the discount dialog for this line and applies the result, asking a
+  /// manager to approve first when the discount is at/above the threshold.
+  /// A cancelled dialog or a cancelled approval leaves the line unchanged.
+  Future<void> _editDiscount(BuildContext context, WidgetRef ref) async {
+    final resolved = await showDiscountDialog(
+      context,
+      lineSubtotal: line.lineSubtotal,
+      currentDiscount: line.discount,
+    );
+    if (resolved == null) return;
+    if (discountNeedsApproval(
+        lineDiscount: resolved, lineSubtotal: line.lineSubtotal)) {
+      if (!context.mounted) return;
+      final approver = await requestManagerApproval(
+        context,
+        ref,
+        action: 'Apply discount',
+      );
+      if (approver == null) return;
+    }
+    ref
+        .read(cartControllerProvider.notifier)
+        .setLineDiscount(line.product.id, resolved);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(cartControllerProvider.notifier);
+    final hasDiscount = line.lineDiscount > 0;
+    final subtitle = hasDiscount
+        ? '${formatMoney(line.unitPrice)} each  ·  '
+            '-${formatMoney(line.lineDiscount)} discount'
+        : '${formatMoney(line.unitPrice)} each';
     return ListTile(
       title: Text(line.product.name),
-      subtitle: Text('${formatMoney(line.unitPrice)} each'),
+      subtitle: Text(subtitle),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -517,6 +550,14 @@ class _CartTile extends ConsumerWidget {
               }
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.local_offer_outlined),
+            tooltip: 'Discount',
+            color: hasDiscount
+                ? Theme.of(context).colorScheme.primary
+                : null,
+            onPressed: () => _editDiscount(context, ref),
+          ),
           SizedBox(
             width: 80,
             child: Text(formatMoney(line.lineTotal),
@@ -532,10 +573,12 @@ class _CartTile extends ConsumerWidget {
 class _TotalsPanel extends StatelessWidget {
   const _TotalsPanel({
     required this.subtotal,
+    required this.discountTotal,
     required this.taxTotal,
     required this.total,
   });
   final int subtotal;
+  final int discountTotal;
   final int taxTotal;
   final int total;
 
@@ -563,6 +606,7 @@ class _TotalsPanel extends StatelessWidget {
       child: Column(
         children: [
           row('Subtotal', subtotal),
+          if (discountTotal > 0) row('Discount', discountTotal),
           row('Tax', taxTotal),
           row('Total', total, bold: true),
         ],

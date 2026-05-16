@@ -8,9 +8,14 @@ import '../../domain/models.dart';
 import '../../shared/money.dart';
 import '../../shared/theme.dart';
 
+/// The sale's total discount — the sum of every line's discount in cents.
+int _saleDiscountTotal(SaleRecord sale) =>
+    sale.lines.fold(0, (sum, line) => sum + line.discount);
+
 /// Builds a printable PDF receipt for a completed sale.
 Future<pw.Document> buildReceiptPdf(SaleRecord sale) async {
   final doc = pw.Document();
+  final discountTotal = _saleDiscountTotal(sale);
   doc.addPage(
     pw.Page(
       pageFormat: PdfPageFormat.roll80,
@@ -27,7 +32,7 @@ Future<pw.Document> buildReceiptPdf(SaleRecord sale) async {
           pw.Text(formatDateTime(sale.createdAt)),
           pw.Text('Cashier: ${sale.cashierName}'),
           pw.Divider(),
-          for (final line in sale.lines)
+          for (final line in sale.lines) ...[
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -37,8 +42,17 @@ Future<pw.Document> buildReceiptPdf(SaleRecord sale) async {
                 pw.Text(formatMoney(line.lineTotal)),
               ],
             ),
+            if (line.discount > 0)
+              pw.Padding(
+                padding: const pw.EdgeInsets.only(left: 12),
+                child: pw.Text(
+                    'Discount -${formatMoney(line.discount)}',
+                    style: const pw.TextStyle(fontSize: 9)),
+              ),
+          ],
           pw.Divider(),
           _pdfRow('Subtotal', sale.subtotal),
+          if (discountTotal > 0) _pdfRow('Discount', discountTotal),
           _pdfRow('Tax', sale.taxTotal),
           _pdfRow('Total', sale.total, bold: true),
           _pdfRow('Cash', sale.tendered),
@@ -68,6 +82,7 @@ pw.Widget _pdfRow(String label, int value, {bool bold = false}) => pw.Row(
 
 /// Shows the on-screen receipt with an option to export/print the PDF.
 Future<void> showReceiptDialog(BuildContext context, SaleRecord sale) {
+  final discountTotal = _saleDiscountTotal(sale);
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
@@ -81,7 +96,7 @@ Future<void> showReceiptDialog(BuildContext context, SaleRecord sale) {
             Text(formatDateTime(sale.createdAt)),
             Text('Cashier: ${sale.cashierName}'),
             const Divider(),
-            for (final line in sale.lines)
+            for (final line in sale.lines) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Row(
@@ -94,8 +109,22 @@ Future<void> showReceiptDialog(BuildContext context, SaleRecord sale) {
                   ],
                 ),
               ),
+              if (line.discount > 0)
+                Padding(
+                  padding: const EdgeInsets.only(left: 12, bottom: 2),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Discount -${formatMoney(line.discount)}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ),
+            ],
             const Divider(),
             _ScreenRow(label: 'Subtotal', value: sale.subtotal),
+            if (discountTotal > 0)
+              _ScreenRow(label: 'Discount', value: discountTotal),
             _ScreenRow(label: 'Tax', value: sale.taxTotal),
             _ScreenRow(label: 'Total', value: sale.total, bold: true),
             _ScreenRow(label: 'Cash', value: sale.tendered),
