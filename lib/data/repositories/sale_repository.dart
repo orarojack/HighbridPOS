@@ -18,10 +18,12 @@ class SaleRepository {
   final AppDatabase _db;
 
   /// Records a completed cash sale: writes sale, items, payment, and stock
-  /// movements, and deducts product stock — all in one transaction.
+  /// movements, deducts product stock, links the sale to [shiftId], and feeds
+  /// the shift's cash total with a `sale` cash event — all in one transaction.
   /// Throws [InsufficientStockException] if any line exceeds available stock.
   Future<SaleRecord> completeCashSale({
     required int cashierId,
+    required int shiftId,
     required List<CartLine> lines,
     required int tendered,
   }) async {
@@ -45,6 +47,7 @@ class SaleRepository {
       final saleId = await _db.into(_db.sales).insert(SalesCompanion.insert(
             referenceNo: reference,
             cashierId: cashierId,
+            shiftId: Value(shiftId),
             subtotal: totals.subtotal,
             taxTotal: totals.taxTotal,
             total: totals.total,
@@ -84,6 +87,19 @@ class SaleRepository {
             amount: totals.total,
             tendered: tendered,
             changeDue: changeDue(tendered: tendered, total: totals.total),
+          ));
+
+      // Feed the shift's cash total and record a `sale` cash event — kept
+      // atomic with the sale by running inside this same transaction.
+      await (_db.update(_db.shifts)..where((s) => s.id.equals(shiftId)))
+          .write(ShiftsCompanion.custom(
+        cashSalesTotal: _db.shifts.cashSalesTotal + Variable(totals.total),
+      ));
+      await _db.into(_db.cashEvents).insert(CashEventsCompanion.insert(
+            shiftId: shiftId,
+            userId: cashierId,
+            type: CashEventType.sale.name,
+            amount: Value(totals.total),
           ));
 
       return getById(saleId);

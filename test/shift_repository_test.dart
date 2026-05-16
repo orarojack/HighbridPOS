@@ -3,8 +3,11 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:highbrid_pos/data/db/app_database.dart';
 import 'package:highbrid_pos/data/db/seed.dart';
+import 'package:highbrid_pos/data/repositories/product_repository.dart';
+import 'package:highbrid_pos/data/repositories/sale_repository.dart';
 import 'package:highbrid_pos/data/repositories/shift_repository.dart';
 import 'package:highbrid_pos/domain/enums.dart';
+import 'package:highbrid_pos/domain/models.dart';
 
 void main() {
   late AppDatabase db;
@@ -229,6 +232,44 @@ void main() {
         .get();
     expect(closeEvents.length, 1);
     expect(closeEvents.single.amount, 15800);
+  });
+
+  test('completeCashSale links the sale to the shift and feeds its cash total',
+      () async {
+    final shift = await repo.openShift(
+      userId: 1,
+      terminalId: 'TILL-001',
+      openingFloat: 10000,
+    );
+
+    final products = ProductRepository(db);
+    final cola = (await products.search('cola')).single;
+
+    final sale = await SaleRepository(db).completeCashSale(
+      cashierId: 1,
+      shiftId: shift.id,
+      lines: [CartLine(product: cola, qty: 3)],
+      tendered: 1000,
+    );
+
+    // The persisted sales row carries the shift id.
+    final saleRow = await (db.select(db.sales)
+          ..where((s) => s.id.equals(sale.id)))
+        .getSingle();
+    expect(saleRow.shiftId, shift.id);
+
+    // The shift's cash total reflects the sale total.
+    final updated = await repo.currentOpenShift(1);
+    expect(updated!.cashSalesTotal, sale.total);
+
+    // A `sale` cash event was written for the shift.
+    final saleEvents = await (db.select(db.cashEvents)
+          ..where((e) => e.type.equals(CashEventType.sale.name)))
+        .get();
+    expect(saleEvents.length, 1);
+    expect(saleEvents.single.shiftId, shift.id);
+    expect(saleEvents.single.amount, sale.total);
+    expect(saleEvents.single.userId, 1);
   });
 
   test('shiftSummary returns the shift, cashier name and event count',

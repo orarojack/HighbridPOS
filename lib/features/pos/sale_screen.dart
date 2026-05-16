@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/sale_repository.dart';
+import '../../data/repositories/shift_repository.dart';
 import '../../domain/models.dart';
 import '../../providers.dart';
 import '../../shared/money.dart';
@@ -69,8 +70,19 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
 
     final cashier = ref.read(authControllerProvider)!;
     try {
+      // TODO(slice2-task10): replace with the shift selected on the Sell flow.
+      // Until Sell-gating lands, ensure the cashier has an open shift so the
+      // sale can be linked to one.
+      final shiftRepo = ShiftRepository(ref.read(databaseProvider));
+      final shift = await shiftRepo.currentOpenShift(cashier.id) ??
+          await shiftRepo.openShift(
+            userId: cashier.id,
+            terminalId: 'TILL-001',
+            openingFloat: 0,
+          );
       final sale = await ref.read(saleRepositoryProvider).completeCashSale(
             cashierId: cashier.id,
+            shiftId: shift.id,
             lines: cart,
             tendered: tendered,
           );

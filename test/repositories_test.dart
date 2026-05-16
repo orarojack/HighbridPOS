@@ -7,14 +7,23 @@ import 'package:highbrid_pos/data/repositories/auth_repository.dart';
 import 'package:highbrid_pos/data/repositories/product_repository.dart';
 import 'package:highbrid_pos/data/repositories/report_repository.dart';
 import 'package:highbrid_pos/data/repositories/sale_repository.dart';
+import 'package:highbrid_pos/data/repositories/shift_repository.dart';
 import 'package:highbrid_pos/domain/models.dart';
 
 void main() {
   late AppDatabase db;
+  // An open shift for the cashier so cash sales have a shift to link to.
+  late int shiftId;
 
   setUp(() async {
     db = AppDatabase(NativeDatabase.memory());
     await seedIfEmpty(db);
+    final shift = await ShiftRepository(db).openShift(
+      userId: 1,
+      terminalId: 'TILL-001',
+      openingFloat: 0,
+    );
+    shiftId = shift.id;
   });
 
   tearDown(() async => db.close());
@@ -44,6 +53,7 @@ void main() {
 
     final sale = await SaleRepository(db).completeCashSale(
       cashierId: 1,
+      shiftId: shiftId,
       lines: [CartLine(product: cola, qty: 3)],
       tendered: 1000,
     );
@@ -62,6 +72,7 @@ void main() {
     expect(
       () => SaleRepository(db).completeCashSale(
         cashierId: 1,
+        shiftId: shiftId,
         lines: [CartLine(product: cola, qty: cola.stockQty + 1)],
         tendered: 100000,
       ),
@@ -82,6 +93,7 @@ void main() {
     await expectLater(
       SaleRepository(db).completeCashSale(
         cashierId: 1,
+        shiftId: shiftId,
         lines: [
           CartLine(product: water, qty: 1),
           CartLine(product: cola, qty: cola.stockQty + 1),
@@ -110,9 +122,15 @@ void main() {
     final water = (await products.search('water')).single;
     final repo = SaleRepository(db);
     final s1 = await repo.completeCashSale(
-        cashierId: 1, lines: [CartLine(product: water, qty: 1)], tendered: 100);
+        cashierId: 1,
+        shiftId: shiftId,
+        lines: [CartLine(product: water, qty: 1)],
+        tendered: 100);
     final s2 = await repo.completeCashSale(
-        cashierId: 1, lines: [CartLine(product: water, qty: 1)], tendered: 100);
+        cashierId: 1,
+        shiftId: shiftId,
+        lines: [CartLine(product: water, qty: 1)],
+        tendered: 100);
     expect(s1.referenceNo.endsWith('-0001'), isTrue);
     expect(s2.referenceNo.endsWith('-0002'), isTrue);
   });
@@ -121,7 +139,10 @@ void main() {
     final products = ProductRepository(db);
     final water = (await products.search('water')).single;
     await SaleRepository(db).completeCashSale(
-        cashierId: 1, lines: [CartLine(product: water, qty: 2)], tendered: 200);
+        cashierId: 1,
+        shiftId: shiftId,
+        lines: [CartLine(product: water, qty: 2)],
+        tendered: 200);
 
     final summary = await ReportRepository(db).dailySummary(DateTime.now());
     expect(summary.saleCount, 1);
