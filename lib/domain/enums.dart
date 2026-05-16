@@ -8,22 +8,34 @@ enum UserRole {
   /// Manager and admin may manage products; cashier may not.
   bool get canManageProducts => this == manager || this == admin;
 
+  static UserRole? fromNameOrNull(String name) =>
+      UserRole.values.where((r) => r.name == name).firstOrNull;
+
   static UserRole fromName(String name) =>
-      UserRole.values.firstWhere((r) => r.name == name);
+      fromNameOrNull(name) ??
+      (throw ArgumentError.value(name, 'name', 'Unknown UserRole'));
 }
 
 enum SaleStatus {
   completed;
 
+  static SaleStatus? fromNameOrNull(String name) =>
+      SaleStatus.values.where((s) => s.name == name).firstOrNull;
+
   static SaleStatus fromName(String name) =>
-      SaleStatus.values.firstWhere((s) => s.name == name);
+      fromNameOrNull(name) ??
+      (throw ArgumentError.value(name, 'name', 'Unknown SaleStatus'));
 }
 
 enum PaymentMethod {
   cash;
 
+  static PaymentMethod? fromNameOrNull(String name) =>
+      PaymentMethod.values.where((m) => m.name == name).firstOrNull;
+
   static PaymentMethod fromName(String name) =>
-      PaymentMethod.values.firstWhere((m) => m.name == name);
+      fromNameOrNull(name) ??
+      (throw ArgumentError.value(name, 'name', 'Unknown PaymentMethod'));
 }
 
 enum MovementType {
@@ -31,6 +43,10 @@ enum MovementType {
   seed,
   adjustment;
 
+  static MovementType? fromNameOrNull(String name) =>
+      MovementType.values.where((t) => t.name == name).firstOrNull;
+
   static MovementType fromName(String name) =>
-      MovementType.values.firstWhere((t) => t.name == name);
+      fromNameOrNull(name) ??
+      (throw ArgumentError.value(name, 'name', 'Unknown MovementType'));
 }
