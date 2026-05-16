@@ -47,6 +47,7 @@ class ReturnRepository {
         soldQty: item.qty,
         alreadyReturnedQty: returned,
         selectedQty: 0,
+        saleItemDiscount: item.discount,
       ));
     }
 
@@ -120,6 +121,7 @@ class ReturnRepository {
                 qty: line.selectedQty,
                 unitPrice: line.unitPrice,
                 taxRate: line.taxRate,
+                discount: Value(line.lineDiscount),
                 lineTax: line.lineTax,
                 lineTotal: line.lineTotal,
               ),
@@ -233,6 +235,7 @@ class ReturnRepository {
         qty: row.qty,
         unitPrice: row.unitPrice,
         taxRate: row.taxRate,
+        discount: row.discount,
         lineTax: row.lineTax,
         lineTotal: row.lineTotal,
       );

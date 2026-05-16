@@ -180,11 +180,13 @@ class CartTotals {
 }
 
 /// A persisted sale line, snapshotting price/name at sale time.
+/// [discount] is the line's total discount (cents) applied before tax.
 class SaleLine {
   final String nameSnapshot;
   final int unitPrice;
   final double taxRate;
   final int qty;
+  final int discount;
   final int lineTax;
   final int lineTotal;
 
@@ -193,6 +195,7 @@ class SaleLine {
     required this.unitPrice,
     required this.taxRate,
     required this.qty,
+    this.discount = 0,
     required this.lineTax,
     required this.lineTotal,
   });
@@ -205,12 +208,13 @@ class SaleLine {
           unitPrice == other.unitPrice &&
           taxRate == other.taxRate &&
           qty == other.qty &&
+          discount == other.discount &&
           lineTax == other.lineTax &&
           lineTotal == other.lineTotal);
 
   @override
-  int get hashCode =>
-      Object.hash(nameSnapshot, unitPrice, taxRate, qty, lineTax, lineTotal);
+  int get hashCode => Object.hash(
+      nameSnapshot, unitPrice, taxRate, qty, discount, lineTax, lineTotal);
 }
 
 /// A completed sale read back from the database.
@@ -426,6 +430,10 @@ class ShiftSummary {
 }
 
 /// One product line in a return draft, built from a persisted sale item.
+///
+/// [saleItemDiscount] is the original sale_item's *total* discount, spread
+/// across its [soldQty] units. Returning [selectedQty] units refunds the
+/// proportional share of that discount (see [lineDiscount]).
 class ReturnLineDraft {
   final int saleItemId;
   final int productId;
@@ -435,6 +443,7 @@ class ReturnLineDraft {
   final int soldQty;
   final int alreadyReturnedQty;
   final int selectedQty;
+  final int saleItemDiscount; // cents — total discount on the original line
 
   ReturnLineDraft({
     required this.saleItemId,
@@ -445,12 +454,18 @@ class ReturnLineDraft {
     required this.soldQty,
     required this.alreadyReturnedQty,
     required this.selectedQty,
+    this.saleItemDiscount = 0,
   });
 
   int get returnableQty => soldQty - alreadyReturnedQty;
   int get lineSubtotal => unitPrice * selectedQty;
-  int get lineTax => (lineSubtotal * taxRate).round();
-  int get lineTotal => lineSubtotal + lineTax;
+
+  /// Proportional share of the original line discount for [selectedQty] units.
+  int get lineDiscount =>
+      soldQty == 0 ? 0 : (saleItemDiscount * selectedQty / soldQty).round();
+  int get lineNet => lineSubtotal - lineDiscount;
+  int get lineTax => (lineNet * taxRate).round();
+  int get lineTotal => lineNet + lineTax;
 
   ReturnLineDraft copyWith({int? selectedQty}) => ReturnLineDraft(
         saleItemId: saleItemId,
@@ -461,6 +476,7 @@ class ReturnLineDraft {
         soldQty: soldQty,
         alreadyReturnedQty: alreadyReturnedQty,
         selectedQty: selectedQty ?? this.selectedQty,
+        saleItemDiscount: saleItemDiscount,
       );
 
   @override
@@ -474,7 +490,8 @@ class ReturnLineDraft {
           taxRate == other.taxRate &&
           soldQty == other.soldQty &&
           alreadyReturnedQty == other.alreadyReturnedQty &&
-          selectedQty == other.selectedQty);
+          selectedQty == other.selectedQty &&
+          saleItemDiscount == other.saleItemDiscount);
 
   @override
   int get hashCode => Object.hash(
@@ -486,6 +503,7 @@ class ReturnLineDraft {
         soldQty,
         alreadyReturnedQty,
         selectedQty,
+        saleItemDiscount,
       );
 }
 
@@ -525,6 +543,8 @@ class ReturnDraft {
 }
 
 /// A persisted return line, snapshotting quantities and amounts at return time.
+/// [discount] is the proportional share of the original line discount that was
+/// refunded for this return's [qty] units.
 class ReturnLine {
   final int id;
   final int returnId;
@@ -534,6 +554,7 @@ class ReturnLine {
   final int qty;
   final int unitPrice; // cents
   final double taxRate;
+  final int discount;
   final int lineTax;
   final int lineTotal;
 
@@ -546,6 +567,7 @@ class ReturnLine {
     required this.qty,
     required this.unitPrice,
     required this.taxRate,
+    this.discount = 0,
     required this.lineTax,
     required this.lineTotal,
   });
@@ -562,6 +584,7 @@ class ReturnLine {
           qty == other.qty &&
           unitPrice == other.unitPrice &&
           taxRate == other.taxRate &&
+          discount == other.discount &&
           lineTax == other.lineTax &&
           lineTotal == other.lineTotal);
 
@@ -575,6 +598,7 @@ class ReturnLine {
         qty,
         unitPrice,
         taxRate,
+        discount,
         lineTax,
         lineTotal,
       );

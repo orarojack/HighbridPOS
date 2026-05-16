@@ -49,6 +49,7 @@ class SaleRepository {
             cashierId: cashierId,
             shiftId: Value(shiftId),
             subtotal: totals.subtotal,
+            discountTotal: Value(totals.discountTotal),
             taxTotal: totals.taxTotal,
             total: totals.total,
             status: SaleStatus.completed.name,
@@ -62,6 +63,7 @@ class SaleRepository {
               unitPrice: line.unitPrice,
               taxRate: line.product.taxRate,
               qty: line.qty,
+              discount: Value(line.lineDiscount),
               lineTax: line.lineTax,
               lineTotal: line.lineTotal,
             ));
@@ -130,18 +132,19 @@ class SaleRepository {
       tendered: payment.tendered,
       changeDue: payment.changeDue,
       createdAt: sale.createdAt,
-      lines: items
-          .map((i) => SaleLine(
-                nameSnapshot: i.nameSnapshot,
-                unitPrice: i.unitPrice,
-                taxRate: i.taxRate,
-                qty: i.qty,
-                lineTax: i.lineTax,
-                lineTotal: i.lineTotal,
-              ))
-          .toList(),
+      lines: items.map(_toSaleLine).toList(),
     );
   }
+
+  SaleLine _toSaleLine(SaleItem row) => SaleLine(
+        nameSnapshot: row.nameSnapshot,
+        unitPrice: row.unitPrice,
+        taxRate: row.taxRate,
+        qty: row.qty,
+        discount: row.discount,
+        lineTax: row.lineTax,
+        lineTotal: row.lineTotal,
+      );
 
   /// Builds the next per-day sale reference: YYYYMMDD-NNNN.
   Future<String> _nextReference() async {
