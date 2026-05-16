@@ -131,6 +131,34 @@ A completed sale writes `sales` + `sale_items` + `payments` + `stock_movements` 
 - **Widget tests:** login flow (success, bad password, inactive user) and the POS sale
   screen (add item, stock guard, complete cash sale).
 
+## Visual design
+
+A clean, **green-and-white** theme. The app is white-first: every screen background is
+pure white, and the deep forest green is used for the app bar, primary buttons, totals,
+and active/selected states. Defined once in `shared/theme` and applied via a single
+Material `ThemeData`.
+
+### Palette
+
+| Role | Hex | Used for |
+|------|-----|----------|
+| Primary green | `#004224` | App bar, primary buttons, sale total, active states |
+| Primary dark | `#002E18` | Pressed / hover on green elements |
+| Green tint | `#E8F0EB` | Selected rows, subtle panel fills, light dividers |
+| Surface | `#FFFFFF` | All screen and card backgrounds (pure white) |
+| On-primary text | `#FFFFFF` | Text/icons on the green |
+| Body text | `#1A1A1A` | Primary text on white |
+| Muted text | `#5C6661` | Secondary labels, hints |
+| Divider | `#E0E4E2` | Borders and separators |
+| Error | `#C62828` | Inline validation errors, stock-guard warnings |
+
+### Conventions
+
+- Material 3 `ColorScheme` seeded from the primary green, with `surface` forced to pure
+  white so generated tints never muddy the background.
+- Single light theme in slice 1; no dark mode.
+- Green is an accent, not a wash — large areas stay white for a clean POS look.
+
 ## Out-of-scope reminders
 
 No network calls, no sync, no external services. The app is fully functional offline by
