@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../providers.dart';
 import '../../shared/money.dart';
 import 'product_controller.dart';
 import 'product_form_screen.dart';

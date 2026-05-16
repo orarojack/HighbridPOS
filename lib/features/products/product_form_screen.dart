@@ -158,7 +158,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             const SizedBox(height: 12),
             categories.when(
               data: (list) => DropdownButtonFormField<int?>(
-                value: _categoryId,
+                initialValue: _categoryId,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: [
                   const DropdownMenuItem(value: null, child: Text('None')),
