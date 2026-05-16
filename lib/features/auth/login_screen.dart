@@ -14,6 +14,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _username = TextEditingController();
   final _password = TextEditingController();
+  final _passwordFocus = FocusNode();
   String? _error;
   bool _busy = false;
 
@@ -21,6 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void dispose() {
     _username.dispose();
     _password.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -61,11 +63,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _username,
                     decoration: const InputDecoration(labelText: 'Username'),
                     autofocus: true,
-                    onSubmitted: (_) => _submit(),
+                    onSubmitted: (_) => _passwordFocus.requestFocus(),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _password,
+                    focusNode: _passwordFocus,
                     decoration: const InputDecoration(labelText: 'Password'),
                     obscureText: true,
                     onSubmitted: (_) => _submit(),
