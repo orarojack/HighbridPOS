@@ -120,5 +120,6 @@ class AuthRepository {
         fullName: row.fullName,
         role: UserRole.fromName(row.role),
         active: row.active,
+        forcePinChange: row.forcePinChange,
       );
 }

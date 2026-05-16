@@ -17,6 +17,7 @@ class AppUser {
   final String fullName;
   final UserRole role;
   final bool active;
+  final bool forcePinChange;
 
   const AppUser({
     required this.id,
@@ -24,6 +25,7 @@ class AppUser {
     required this.fullName,
     required this.role,
     required this.active,
+    this.forcePinChange = false,
   });
 
   @override
@@ -34,10 +36,12 @@ class AppUser {
           username == other.username &&
           fullName == other.fullName &&
           role == other.role &&
-          active == other.active);
+          active == other.active &&
+          forcePinChange == other.forcePinChange);
 
   @override
-  int get hashCode => Object.hash(id, username, fullName, role, active);
+  int get hashCode =>
+      Object.hash(id, username, fullName, role, active, forcePinChange);
 }
 
 class Category {

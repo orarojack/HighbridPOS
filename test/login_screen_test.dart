@@ -20,6 +20,13 @@ Future<ProviderContainer> _seededContainer() async {
   );
 }
 
+/// The login screen opens in Staff PIN mode; switch it to Manager mode so the
+/// username/password fields are shown.
+Future<void> _selectManagerMode(WidgetTester tester) async {
+  await tester.tap(find.text('Manager'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('shows an error on a wrong password', (tester) async {
     final container = await _seededContainer();
@@ -30,6 +37,7 @@ void main() {
       child: const MaterialApp(home: LoginScreen()),
     ));
 
+    await _selectManagerMode(tester);
     await tester.enterText(find.byType(TextField).first, 'admin');
     await tester.enterText(find.byType(TextField).last, 'nope');
     await tester.tap(find.text('Sign in'));
@@ -48,6 +56,7 @@ void main() {
       child: const MaterialApp(home: LoginScreen()),
     ));
 
+    await _selectManagerMode(tester);
     await tester.enterText(find.byType(TextField).first, 'admin');
     await tester.enterText(find.byType(TextField).last, 'admin123');
     await tester.tap(find.text('Sign in'));
@@ -76,6 +85,7 @@ void main() {
       child: const MaterialApp(home: LoginScreen()),
     ));
 
+    await _selectManagerMode(tester);
     await tester.enterText(find.byType(TextField).first, 'disabled_user');
     await tester.enterText(find.byType(TextField).last, 'disabled123');
     await tester.tap(find.text('Sign in'));
