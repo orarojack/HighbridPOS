@@ -1,6 +1,5 @@
 // test/sale_calculator_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:highbrid_pos/domain/enums.dart';
 import 'package:highbrid_pos/domain/models.dart';
 import 'package:highbrid_pos/domain/sale_calculator.dart';
 
@@ -44,6 +43,7 @@ void main() {
   test('changeDue is tendered minus total', () {
     expect(changeDue(tendered: 1000, total: 590), 410);
     expect(changeDue(tendered: 590, total: 590), 0);
+    expect(changeDue(tendered: 500, total: 590), -90); // insufficient tender yields negative
   });
 
   test('isSufficientTender is false when tendered is below total', () {
