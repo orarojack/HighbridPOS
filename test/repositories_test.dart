@@ -147,6 +147,7 @@ void main() {
     final summary = await ReportRepository(db).dailySummary(DateTime.now());
     expect(summary.saleCount, 1);
     expect(summary.total, 120); // 2 * 60, no tax
+    expect(summary.discountTotal, 0); // no discounts applied
     expect(summary.returnCount, 0);
     expect(summary.refundTotal, 0);
   });

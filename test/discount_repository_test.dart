@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:highbrid_pos/data/db/app_database.dart';
 import 'package:highbrid_pos/data/db/seed.dart';
+import 'package:highbrid_pos/data/repositories/report_repository.dart';
 import 'package:highbrid_pos/data/repositories/return_repository.dart';
 import 'package:highbrid_pos/data/repositories/sale_repository.dart';
 import 'package:highbrid_pos/data/repositories/shift_repository.dart';
@@ -82,6 +83,26 @@ void main() {
         sale.lines.firstWhere((l) => l.nameSnapshot == rice.name);
     expect(riceLine.discount, 300);
     expect(riceLine.lineTotal, 1740);
+  });
+
+  test('dailySummary.discountTotal sums discount_total across sales', () async {
+    // Rice: 450 * 4 = 1800; discount 300 over the line.
+    // Bread: 120 * 2 = 240; discount 40 over the line.
+    // Total discountTotal for the day = 300 + 40 = 340.
+    await SaleRepository(db).completeCashSale(
+      cashierId: 1,
+      shiftId: shift.id,
+      lines: [
+        CartLine(product: rice, qty: 4, discount: 300),
+        CartLine(product: bread, qty: 2, discount: 40),
+      ],
+      tendered: 1000000,
+    );
+
+    final summary =
+        await ReportRepository(db).dailySummary(DateTime.now());
+    expect(summary.saleCount, 1);
+    expect(summary.discountTotal, 340);
   });
 
   test('return of a discounted sale line refunds the discounted amount',

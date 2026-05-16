@@ -18,10 +18,12 @@ class ReportRepository {
               s.createdAt.isSmallerThanValue(end)))
         .get();
     var subtotal = 0;
+    var discountTotal = 0;
     var taxTotal = 0;
     var total = 0;
     for (final s in sales) {
       subtotal += s.subtotal;
+      discountTotal += s.discountTotal;
       taxTotal += s.taxTotal;
       total += s.total;
     }
@@ -38,6 +40,7 @@ class ReportRepository {
       day: start,
       saleCount: sales.length,
       subtotal: subtotal,
+      discountTotal: discountTotal,
       taxTotal: taxTotal,
       total: total,
       returnCount: returns.length,

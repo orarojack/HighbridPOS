@@ -671,6 +671,7 @@ class DailySummary {
   final DateTime day;
   final int saleCount;
   final int subtotal;
+  final int discountTotal; // cents — sum of discounts applied across all sales
   final int taxTotal;
   final int total;
   final int returnCount;
@@ -680,6 +681,7 @@ class DailySummary {
     required this.day,
     required this.saleCount,
     required this.subtotal,
+    required this.discountTotal,
     required this.taxTotal,
     required this.total,
     required this.returnCount,
@@ -693,6 +695,7 @@ class DailySummary {
           day == other.day &&
           saleCount == other.saleCount &&
           subtotal == other.subtotal &&
+          discountTotal == other.discountTotal &&
           taxTotal == other.taxTotal &&
           total == other.total &&
           returnCount == other.returnCount &&
@@ -700,5 +703,5 @@ class DailySummary {
 
   @override
   int get hashCode => Object.hash(
-      day, saleCount, subtotal, taxTotal, total, returnCount, refundTotal);
+      day, saleCount, subtotal, discountTotal, taxTotal, total, returnCount, refundTotal);
 }
