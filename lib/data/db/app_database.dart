@@ -74,6 +74,8 @@ class StockMovements extends Table {
   IntColumn get productId => integer().references(Products, #id)();
   TextColumn get type => text()();
   IntColumn get qtyDelta => integer()();
+  // Polymorphic reference: refType names the source entity kind (e.g. 'sale'),
+  // refId its id. No FK constraint because the target table varies.
   TextColumn get refType => text().nullable()();
   IntColumn get refId => integer().nullable()();
   TextColumn get note => text().withDefault(const Constant(''))();
@@ -94,4 +96,12 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        beforeOpen: (details) async {
+          await customStatement('PRAGMA foreign_keys = ON');
+        },
+      );
 }
