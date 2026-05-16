@@ -566,6 +566,7 @@ class ReturnRecord {
   final int id;
   final String referenceNo;
   final int originalSaleId;
+  final String originalReference;
   final int cashierId;
   final int? shiftId;
   final String reason;
@@ -578,6 +579,7 @@ class ReturnRecord {
     required this.id,
     required this.referenceNo,
     required this.originalSaleId,
+    required this.originalReference,
     required this.cashierId,
     required this.shiftId,
     required this.reason,
@@ -594,6 +596,7 @@ class ReturnRecord {
           id == other.id &&
           referenceNo == other.referenceNo &&
           originalSaleId == other.originalSaleId &&
+          originalReference == other.originalReference &&
           cashierId == other.cashierId &&
           shiftId == other.shiftId &&
           reason == other.reason &&
@@ -607,6 +610,7 @@ class ReturnRecord {
         id,
         referenceNo,
         originalSaleId,
+        originalReference,
         cashierId,
         shiftId,
         reason,

@@ -177,7 +177,10 @@ class ReturnRepository {
     final items = await (_db.select(_db.returnItems)
           ..where((i) => i.returnId.equals(id)))
         .get();
-    return _toReturnRecord(row, items);
+    final sale = await (_db.select(_db.sales)
+          ..where((s) => s.id.equals(row.originalSaleId)))
+        .getSingle();
+    return _toReturnRecord(row, items, sale.referenceNo);
   }
 
   /// Sum of `return_items.qty` already returned against [saleItemId].
@@ -205,11 +208,13 @@ class ReturnRepository {
   ReturnRecord _toReturnRecord(
     ReturnRow row,
     List<ReturnItemRow> items,
+    String originalReference,
   ) =>
       ReturnRecord(
         id: row.id,
         referenceNo: row.referenceNo,
         originalSaleId: row.originalSaleId,
+        originalReference: originalReference,
         cashierId: row.cashierId,
         shiftId: row.shiftId,
         reason: row.reason,
