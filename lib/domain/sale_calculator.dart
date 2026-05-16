@@ -6,15 +6,20 @@ import 'models.dart';
 /// Tax is summed from per-line rounded values so it matches line-level display.
 CartTotals calculateTotals(List<CartLine> lines) {
   var subtotal = 0;
+  var discountTotal = 0;
   var taxTotal = 0;
+  var total = 0;
   for (final line in lines) {
     subtotal += line.lineSubtotal;
+    discountTotal += line.lineDiscount;
     taxTotal += line.lineTax;
+    total += line.lineTotal;
   }
   return CartTotals(
     subtotal: subtotal,
+    discountTotal: discountTotal,
     taxTotal: taxTotal,
-    total: subtotal + taxTotal,
+    total: total,
   );
 }
 

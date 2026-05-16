@@ -111,53 +111,72 @@ class Product {
 }
 
 /// One product line in the in-memory cart. [qty] > 0.
+/// [discount] is a fixed cent amount applied to the line; tax is computed on
+/// the discounted (net) amount.
 class CartLine {
   final Product product;
   final int qty;
+  final int discount;
 
-  const CartLine({required this.product, required this.qty});
+  const CartLine({
+    required this.product,
+    required this.qty,
+    this.discount = 0,
+  });
 
   int get unitPrice => product.sellPrice;
   int get lineSubtotal => unitPrice * qty;
-  int get lineTax => (lineSubtotal * product.taxRate).round();
-  int get lineTotal => lineSubtotal + lineTax;
+  int get lineDiscount => discount.clamp(0, lineSubtotal);
+  int get lineNet => lineSubtotal - lineDiscount;
+  int get lineTax => (lineNet * product.taxRate).round();
+  int get lineTotal => lineNet + lineTax;
 
-  CartLine copyWith({int? qty}) =>
-      CartLine(product: product, qty: qty ?? this.qty);
+  CartLine copyWith({int? qty, int? discount}) => CartLine(
+        product: product,
+        qty: qty ?? this.qty,
+        discount: discount ?? this.discount,
+      );
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is CartLine && product == other.product && qty == other.qty);
+      (other is CartLine &&
+          product == other.product &&
+          qty == other.qty &&
+          discount == other.discount);
 
   @override
-  int get hashCode => Object.hash(product, qty);
+  int get hashCode => Object.hash(product, qty, discount);
 }
 
 /// Aggregated totals for a set of cart lines.
 class CartTotals {
   final int subtotal;
+  final int discountTotal;
   final int taxTotal;
   final int total;
 
   const CartTotals({
     required this.subtotal,
+    required this.discountTotal,
     required this.taxTotal,
     required this.total,
   });
 
-  static const empty = CartTotals(subtotal: 0, taxTotal: 0, total: 0);
+  static const empty =
+      CartTotals(subtotal: 0, discountTotal: 0, taxTotal: 0, total: 0);
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CartTotals &&
           subtotal == other.subtotal &&
+          discountTotal == other.discountTotal &&
           taxTotal == other.taxTotal &&
           total == other.total);
 
   @override
-  int get hashCode => Object.hash(subtotal, taxTotal, total);
+  int get hashCode => Object.hash(subtotal, discountTotal, taxTotal, total);
 }
 
 /// A persisted sale line, snapshotting price/name at sale time.
