@@ -16,8 +16,8 @@ void main() {
 
     tearDown(() async => db.close());
 
-    test('schemaVersion is 2', () {
-      expect(db.schemaVersion, 2);
+    test('schemaVersion is 3', () {
+      expect(db.schemaVersion, 3);
     });
 
     test('a fresh v2 database has the shifts and cash_events tables', () async {
@@ -207,6 +207,18 @@ void main() {
         'tax_total INTEGER NOT NULL, '
         'total INTEGER NOT NULL, '
         'status TEXT NOT NULL, '
+        "created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')))",
+      );
+      // payments existed in v1; the v2->v3 migration ALTERs it (return_id),
+      // so it must be present for the chained 1->3 upgrade to succeed.
+      await v1.customStatement(
+        'CREATE TABLE payments ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'sale_id INTEGER NOT NULL REFERENCES sales (id), '
+        'method TEXT NOT NULL, '
+        'amount INTEGER NOT NULL, '
+        'tendered INTEGER NOT NULL, '
+        'change_due INTEGER NOT NULL, '
         "created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')))",
       );
       await v1.customStatement(

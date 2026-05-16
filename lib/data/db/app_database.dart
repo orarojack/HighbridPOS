@@ -75,7 +75,35 @@ class Payments extends Table {
   IntColumn get amount => integer()();
   IntColumn get tendered => integer()();
   IntColumn get changeDue => integer()();
+  IntColumn get returnId => integer().nullable().references(Returns, #id)();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DataClassName('ReturnRow')
+class Returns extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get referenceNo => text()(); // unique enforced via index in migration
+  IntColumn get originalSaleId => integer().references(Sales, #id)();
+  IntColumn get cashierId => integer().references(Users, #id)();
+  IntColumn get shiftId => integer().nullable().references(Shifts, #id)();
+  TextColumn get reason => text().withDefault(const Constant(''))();
+  IntColumn get refundTotal => integer()();
+  IntColumn get approvedBy => integer().references(Users, #id)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DataClassName('ReturnItemRow')
+class ReturnItems extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get returnId => integer().references(Returns, #id)();
+  IntColumn get saleItemId => integer().references(SaleItems, #id)();
+  IntColumn get productId => integer().references(Products, #id)();
+  TextColumn get nameSnapshot => text()();
+  IntColumn get qty => integer()();
+  IntColumn get unitPrice => integer()();
+  RealColumn get taxRate => real()();
+  IntColumn get lineTax => integer()();
+  IntColumn get lineTotal => integer()();
 }
 
 class StockMovements extends Table {
@@ -107,6 +135,7 @@ class Shifts extends Table {
   IntColumn get countedCash => integer().nullable()();
   IntColumn get variance => integer().nullable()();
   IntColumn get closedBy => integer().nullable().references(Users, #id)();
+  IntColumn get refundTotal => integer().withDefault(const Constant(0))();
   TextColumn get note => text().withDefault(const Constant(''))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -133,16 +162,24 @@ class CashEvents extends Table {
   StockMovements,
   Shifts,
   CashEvents,
+  Returns,
+  ReturnItems,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
+        onCreate: (m) async {
+          await m.createAll();
+          await customStatement(
+            'CREATE UNIQUE INDEX IF NOT EXISTS returns_reference_no_unique '
+            'ON returns (reference_no)',
+          );
+        },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             // SQLite cannot ALTER TABLE ADD COLUMN a UNIQUE column, so
@@ -171,6 +208,22 @@ class AppDatabase extends _$AppDatabase {
                 staffId: Value('USR-${u.id.toString().padLeft(3, '0')}'),
               ));
             }
+          }
+          if (from < 3) {
+            await m.createTable(returns);
+            await m.createTable(returnItems);
+            await m.addColumn(payments, payments.returnId);
+            // The shifts table is created by m.createTable in the from < 2
+            // block above (already in its current v3 shape, with
+            // refund_total). Only ALTER it when it pre-dates this upgrade,
+            // i.e. came from an existing v2 database.
+            if (from >= 2) {
+              await m.addColumn(shifts, shifts.refundTotal);
+            }
+            await customStatement(
+              'CREATE UNIQUE INDEX IF NOT EXISTS returns_reference_no_unique '
+              'ON returns (reference_no)',
+            );
           }
         },
         beforeOpen: (details) async {
