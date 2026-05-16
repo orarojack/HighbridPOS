@@ -35,6 +35,9 @@ void main() {
     await container
         .read(authControllerProvider.notifier)
         .login('admin', 'admin123');
+    // The Sell screen is gated on an open shift; open one for the cashier.
+    await container.read(shiftRepositoryProvider).openShift(
+        userId: 1, terminalId: 'TILL-001', openingFloat: 0);
 
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
@@ -62,6 +65,9 @@ void main() {
     await container
         .read(authControllerProvider.notifier)
         .login('admin', 'admin123');
+    // The Sell screen is gated on an open shift; open one for the cashier.
+    await container.read(shiftRepositoryProvider).openShift(
+        userId: 1, terminalId: 'TILL-001', openingFloat: 0);
 
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
@@ -102,6 +108,9 @@ void main() {
     await container
         .read(authControllerProvider.notifier)
         .login('admin', 'admin123');
+    // The Sell screen is gated on an open shift; open one for the cashier.
+    await container.read(shiftRepositoryProvider).openShift(
+        userId: 1, terminalId: 'TILL-001', openingFloat: 0);
 
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,

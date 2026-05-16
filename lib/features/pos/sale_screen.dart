@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/sale_repository.dart';
-import '../../data/repositories/shift_repository.dart';
 import '../../domain/models.dart';
 import '../../providers.dart';
+import '../../shared/manager_approval.dart';
 import '../../shared/money.dart';
 import '../auth/auth_controller.dart';
+import '../shift/shift_controller.dart';
+import '../shift/start_shift_screen.dart';
 import 'cart_controller.dart';
 import 'payment_dialog.dart';
 import 'receipt.dart';
@@ -58,7 +60,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     if (!ok) _snack('Not enough stock for ${product.name}.');
   }
 
-  Future<void> _checkout() async {
+  Future<void> _checkout(Shift shift) async {
     final cart = ref.read(cartControllerProvider);
     if (cart.isEmpty) {
       _snack('The cart is empty.');
@@ -70,16 +72,6 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
 
     final cashier = ref.read(authControllerProvider)!;
     try {
-      // TODO(slice2-task10): replace with the shift selected on the Sell flow.
-      // Until Sell-gating lands, ensure the cashier has an open shift so the
-      // sale can be linked to one.
-      final shiftRepo = ShiftRepository(ref.read(databaseProvider));
-      final shift = await shiftRepo.currentOpenShift(cashier.id) ??
-          await shiftRepo.openShift(
-            userId: cashier.id,
-            terminalId: 'TILL-001',
-            openingFloat: 0,
-          );
       final sale = await ref.read(saleRepositoryProvider).completeCashSale(
             cashierId: cashier.id,
             shiftId: shift.id,
@@ -88,6 +80,8 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
           );
       ref.read(cartControllerProvider.notifier).clear();
       await _runSearch(_searchController.text);
+      // Refresh the shift so its running cash total stays current.
+      await ref.read(shiftControllerProvider.notifier).refresh();
       if (mounted) await showReceiptDialog(context, sale);
     } on InsufficientStockException catch (e) {
       _snack('Sale failed: ${e.productName} ran out of stock.');
@@ -96,8 +90,45 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
     }
   }
 
+  /// Records a no-sale drawer open against [shift] after a manager approves.
+  Future<void> _noSale(Shift shift) async {
+    final approver = await requestManagerApproval(
+      context,
+      ref,
+      action: 'Open the cash drawer (no sale)',
+    );
+    if (approver == null) return;
+    final cashier = ref.read(authControllerProvider)!;
+    try {
+      await ref.read(shiftRepositoryProvider).recordNoSale(
+            shiftId: shift.id,
+            userId: cashier.id,
+            approvedBy: approver.id,
+            reason: 'No-sale drawer open',
+          );
+      _snack('Drawer opened — no sale recorded.');
+    } catch (e) {
+      _snack('Could not record the no-sale: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final shiftState = ref.watch(shiftControllerProvider);
+
+    return shiftState.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) => Scaffold(
+        body: Center(child: Text('Could not load the shift: $e')),
+      ),
+      data: (shift) => shift == null
+          ? const _ShiftGate()
+          : _buildSaleUi(context, shift),
+    );
+  }
+
+  Widget _buildSaleUi(BuildContext context, Shift shift) {
     final cart = ref.watch(cartControllerProvider);
     final totals = ref.watch(cartControllerProvider.notifier).totals;
 
@@ -209,12 +240,15 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Row(
                     children: [
-                      Text('Current sale',
-                          style: Theme.of(context).textTheme.titleLarge),
-                      const Spacer(),
+                      Expanded(
+                        child: Text('Current sale',
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                Theme.of(context).textTheme.titleLarge),
+                      ),
                       if (cart.isNotEmpty)
                         TextButton(
                           onPressed: () => ref
@@ -223,6 +257,17 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
                           child: const Text('Clear'),
                         ),
                     ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => _noSale(shift),
+                      icon: const Icon(Icons.lock_open),
+                      label: const Text('No-sale (open drawer)'),
+                    ),
                   ),
                 ),
                 Expanded(
@@ -246,7 +291,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
                     width: double.infinity,
                     height: 52,
                     child: FilledButton.icon(
-                      onPressed: cart.isEmpty ? null : _checkout,
+                      onPressed: cart.isEmpty ? null : () => _checkout(shift),
                       icon: const Icon(Icons.payments),
                       label: const Text('Take cash payment'),
                     ),
@@ -256,6 +301,60 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Shown in place of the sale UI when the signed-in user has no open shift.
+class _ShiftGate extends StatelessWidget {
+  const _ShiftGate();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Icon(Icons.point_of_sale,
+                      size: 40,
+                      color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(height: 12),
+                  Text('Start your shift to begin selling',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Selling is locked until a shift is open on this terminal.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Start shift'),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => StartShiftScreen(
+                            onStarted: () => Navigator.of(context).pop(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

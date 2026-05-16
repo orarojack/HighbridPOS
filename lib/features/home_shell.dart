@@ -9,6 +9,7 @@ import 'auth/lock_screen.dart';
 import 'pos/sale_screen.dart';
 import 'products/product_list_screen.dart';
 import 'reports/daily_summary_screen.dart';
+import 'shift/shift_screen.dart';
 
 /// Idle time after which the terminal auto-locks.
 const _autoLockTimeout = Duration(minutes: 5);
@@ -73,6 +74,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
     final destinations = <({IconData icon, String label, Widget page})>[
       (icon: Icons.point_of_sale, label: 'Sell', page: const SaleScreen()),
+      (icon: Icons.schedule, label: 'Shift', page: const ShiftScreen()),
       if (user.role.canManageProducts)
         (
           icon: Icons.inventory_2,
