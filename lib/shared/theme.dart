@@ -13,6 +13,13 @@ ThemeData buildAppTheme() {
     useMaterial3: true,
     colorScheme: scheme,
     scaffoldBackgroundColor: const Color(0xFFFFFFFF),
+    // The design spec puts the deep forest green on the app bar; Material 3
+    // would otherwise tint it near-white from the surface colour.
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF004224),
+      foregroundColor: Color(0xFFFFFFFF),
+      elevation: 0,
+    ),
     inputDecorationTheme: const InputDecorationTheme(
       border: OutlineInputBorder(),
       isDense: true,
