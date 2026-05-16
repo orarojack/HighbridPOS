@@ -50,3 +50,31 @@ enum MovementType {
       fromNameOrNull(name) ??
       (throw ArgumentError.value(name, 'name', 'Unknown MovementType'));
 }
+
+enum ShiftStatus {
+  open,
+  closed;
+
+  static ShiftStatus? fromNameOrNull(String name) =>
+      ShiftStatus.values.where((s) => s.name == name).firstOrNull;
+
+  static ShiftStatus fromName(String name) =>
+      fromNameOrNull(name) ??
+      (throw ArgumentError.value(name, 'name', 'Unknown ShiftStatus'));
+}
+
+enum CashEventType {
+  shiftOpen,
+  shiftClose,
+  sale,
+  noSale,
+  payIn,
+  payOut;
+
+  static CashEventType? fromNameOrNull(String name) =>
+      CashEventType.values.where((t) => t.name == name).firstOrNull;
+
+  static CashEventType fromName(String name) =>
+      fromNameOrNull(name) ??
+      (throw ArgumentError.value(name, 'name', 'Unknown CashEventType'));
+}

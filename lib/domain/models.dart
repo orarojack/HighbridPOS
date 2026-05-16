@@ -250,6 +250,154 @@ class SaleRecord {
       );
 }
 
+/// A cashier shift record.
+class Shift {
+  final int id;
+  final int userId;
+  final int terminalId;
+  final int openingFloat; // cents
+  final ShiftStatus status;
+  final DateTime openedAt;
+  final DateTime? closedAt;
+  final int cashSalesTotal; // cents
+  final int payInTotal; // cents
+  final int payOutTotal; // cents
+  final int? expectedCash; // cents
+  final int? countedCash; // cents
+  final int? variance; // cents
+  final int? closedBy;
+  final String note;
+
+  const Shift({
+    required this.id,
+    required this.userId,
+    required this.terminalId,
+    required this.openingFloat,
+    required this.status,
+    required this.openedAt,
+    required this.closedAt,
+    required this.cashSalesTotal,
+    required this.payInTotal,
+    required this.payOutTotal,
+    required this.expectedCash,
+    required this.countedCash,
+    required this.variance,
+    required this.closedBy,
+    required this.note,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Shift &&
+          id == other.id &&
+          userId == other.userId &&
+          terminalId == other.terminalId &&
+          openingFloat == other.openingFloat &&
+          status == other.status &&
+          openedAt == other.openedAt &&
+          closedAt == other.closedAt &&
+          cashSalesTotal == other.cashSalesTotal &&
+          payInTotal == other.payInTotal &&
+          payOutTotal == other.payOutTotal &&
+          expectedCash == other.expectedCash &&
+          countedCash == other.countedCash &&
+          variance == other.variance &&
+          closedBy == other.closedBy &&
+          note == other.note);
+
+  @override
+  int get hashCode => Object.hash(
+        id,
+        userId,
+        terminalId,
+        openingFloat,
+        status,
+        openedAt,
+        closedAt,
+        cashSalesTotal,
+        payInTotal,
+        payOutTotal,
+        expectedCash,
+        countedCash,
+        variance,
+        closedBy,
+        note,
+      );
+}
+
+/// A single cash-drawer event within a shift.
+class CashEvent {
+  final int id;
+  final int shiftId;
+  final int userId;
+  final CashEventType type;
+  final int? amount; // cents; null for no-sale events
+  final String reason;
+  final int? approvedBy;
+  final DateTime createdAt;
+
+  const CashEvent({
+    required this.id,
+    required this.shiftId,
+    required this.userId,
+    required this.type,
+    required this.amount,
+    required this.reason,
+    required this.approvedBy,
+    required this.createdAt,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CashEvent &&
+          id == other.id &&
+          shiftId == other.shiftId &&
+          userId == other.userId &&
+          type == other.type &&
+          amount == other.amount &&
+          reason == other.reason &&
+          approvedBy == other.approvedBy &&
+          createdAt == other.createdAt);
+
+  @override
+  int get hashCode => Object.hash(
+        id,
+        shiftId,
+        userId,
+        type,
+        amount,
+        reason,
+        approvedBy,
+        createdAt,
+      );
+}
+
+/// Aggregated view of a shift plus cashier name and event count.
+class ShiftSummary {
+  final Shift shift;
+  final String cashierName;
+  final int eventCount;
+
+  const ShiftSummary({
+    required this.shift,
+    required this.cashierName,
+    required this.eventCount,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ShiftSummary &&
+          shift == other.shift &&
+          cashierName == other.cashierName &&
+          eventCount == other.eventCount);
+
+  @override
+  int get hashCode => Object.hash(shift, cashierName, eventCount);
+}
+
 /// Daily aggregate for the summary screen.
 class DailySummary {
   final DateTime day;
