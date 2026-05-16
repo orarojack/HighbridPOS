@@ -402,6 +402,217 @@ class ShiftSummary {
   int get hashCode => Object.hash(shift, cashierName, eventCount);
 }
 
+/// One product line in a return draft, built from a persisted sale item.
+class ReturnLineDraft {
+  final int saleItemId;
+  final int productId;
+  final String nameSnapshot;
+  final int unitPrice; // cents
+  final double taxRate;
+  final int soldQty;
+  final int alreadyReturnedQty;
+  final int selectedQty;
+
+  ReturnLineDraft({
+    required this.saleItemId,
+    required this.productId,
+    required this.nameSnapshot,
+    required this.unitPrice,
+    required this.taxRate,
+    required this.soldQty,
+    required this.alreadyReturnedQty,
+    required this.selectedQty,
+  });
+
+  int get returnableQty => soldQty - alreadyReturnedQty;
+  int get lineSubtotal => unitPrice * selectedQty;
+  int get lineTax => (lineSubtotal * taxRate).round();
+  int get lineTotal => lineSubtotal + lineTax;
+
+  ReturnLineDraft copyWith({int? selectedQty}) => ReturnLineDraft(
+        saleItemId: saleItemId,
+        productId: productId,
+        nameSnapshot: nameSnapshot,
+        unitPrice: unitPrice,
+        taxRate: taxRate,
+        soldQty: soldQty,
+        alreadyReturnedQty: alreadyReturnedQty,
+        selectedQty: selectedQty ?? this.selectedQty,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReturnLineDraft &&
+          saleItemId == other.saleItemId &&
+          productId == other.productId &&
+          nameSnapshot == other.nameSnapshot &&
+          unitPrice == other.unitPrice &&
+          taxRate == other.taxRate &&
+          soldQty == other.soldQty &&
+          alreadyReturnedQty == other.alreadyReturnedQty &&
+          selectedQty == other.selectedQty);
+
+  @override
+  int get hashCode => Object.hash(
+        saleItemId,
+        productId,
+        nameSnapshot,
+        unitPrice,
+        taxRate,
+        soldQty,
+        alreadyReturnedQty,
+        selectedQty,
+      );
+}
+
+/// In-memory return draft before it is persisted.
+class ReturnDraft {
+  final int originalSaleId;
+  final String originalReference;
+  final List<ReturnLineDraft> lines;
+  final String reason;
+
+  ReturnDraft({
+    required this.originalSaleId,
+    required this.originalReference,
+    required List<ReturnLineDraft> lines,
+    required this.reason,
+  }) : lines = List.unmodifiable(lines);
+
+  int get refundTotal => lines.fold(0, (sum, l) => sum + l.lineTotal);
+  bool get hasSelection => lines.any((l) => l.selectedQty > 0);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReturnDraft &&
+          originalSaleId == other.originalSaleId &&
+          originalReference == other.originalReference &&
+          _listEquals(lines, other.lines) &&
+          reason == other.reason);
+
+  @override
+  int get hashCode => Object.hash(
+        originalSaleId,
+        originalReference,
+        Object.hashAll(lines),
+        reason,
+      );
+}
+
+/// A persisted return line, snapshotting quantities and amounts at return time.
+class ReturnLine {
+  final int id;
+  final int returnId;
+  final int saleItemId;
+  final int productId;
+  final String nameSnapshot;
+  final int qty;
+  final int unitPrice; // cents
+  final double taxRate;
+  final int lineTax;
+  final int lineTotal;
+
+  const ReturnLine({
+    required this.id,
+    required this.returnId,
+    required this.saleItemId,
+    required this.productId,
+    required this.nameSnapshot,
+    required this.qty,
+    required this.unitPrice,
+    required this.taxRate,
+    required this.lineTax,
+    required this.lineTotal,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReturnLine &&
+          id == other.id &&
+          returnId == other.returnId &&
+          saleItemId == other.saleItemId &&
+          productId == other.productId &&
+          nameSnapshot == other.nameSnapshot &&
+          qty == other.qty &&
+          unitPrice == other.unitPrice &&
+          taxRate == other.taxRate &&
+          lineTax == other.lineTax &&
+          lineTotal == other.lineTotal);
+
+  @override
+  int get hashCode => Object.hash(
+        id,
+        returnId,
+        saleItemId,
+        productId,
+        nameSnapshot,
+        qty,
+        unitPrice,
+        taxRate,
+        lineTax,
+        lineTotal,
+      );
+}
+
+/// A completed return record read back from the database.
+class ReturnRecord {
+  final int id;
+  final String referenceNo;
+  final int originalSaleId;
+  final int cashierId;
+  final int? shiftId;
+  final String reason;
+  final int refundTotal;
+  final int? approvedBy;
+  final DateTime createdAt;
+  final List<ReturnLine> lines;
+
+  ReturnRecord({
+    required this.id,
+    required this.referenceNo,
+    required this.originalSaleId,
+    required this.cashierId,
+    required this.shiftId,
+    required this.reason,
+    required this.refundTotal,
+    required this.approvedBy,
+    required this.createdAt,
+    required List<ReturnLine> lines,
+  }) : lines = List.unmodifiable(lines);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReturnRecord &&
+          id == other.id &&
+          referenceNo == other.referenceNo &&
+          originalSaleId == other.originalSaleId &&
+          cashierId == other.cashierId &&
+          shiftId == other.shiftId &&
+          reason == other.reason &&
+          refundTotal == other.refundTotal &&
+          approvedBy == other.approvedBy &&
+          createdAt == other.createdAt &&
+          _listEquals(lines, other.lines));
+
+  @override
+  int get hashCode => Object.hash(
+        id,
+        referenceNo,
+        originalSaleId,
+        cashierId,
+        shiftId,
+        reason,
+        refundTotal,
+        approvedBy,
+        createdAt,
+        Object.hashAll(lines),
+      );
+}
+
 /// Daily aggregate for the summary screen.
 class DailySummary {
   final DateTime day;

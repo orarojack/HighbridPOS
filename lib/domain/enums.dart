@@ -69,7 +69,8 @@ enum CashEventType {
   sale,
   noSale,
   payIn,
-  payOut;
+  payOut,
+  refund;
 
   static CashEventType? fromNameOrNull(String name) =>
       CashEventType.values.where((t) => t.name == name).firstOrNull;
