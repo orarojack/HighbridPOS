@@ -17,6 +17,20 @@ Future<void> seedIfEmpty(AppDatabase db) async {
           passwordHash: BCrypt.hashpw('admin123', BCrypt.gensalt()),
           fullName: 'Store Admin',
           role: UserRole.admin.name,
+          staffId: const Value('ADM-001'),
+          pinHash: Value(BCrypt.hashpw('000000', BCrypt.gensalt())),
+          forcePinChange: const Value(true),
+        ));
+
+    await db.into(db.users).insert(UsersCompanion.insert(
+          username: 'cashier',
+          passwordHash: BCrypt.hashpw('cashier123', BCrypt.gensalt()),
+          fullName: 'Sample Cashier',
+          role: UserRole.cashier.name,
+          staffId: const Value('CSH-001'),
+          pinHash: Value(BCrypt.hashpw('000000', BCrypt.gensalt())),
+          forcePinChange: const Value(true),
+          active: const Value(true),
         ));
 
     final groceries = await db.into(db.categories).insert(
