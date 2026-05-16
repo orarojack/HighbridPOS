@@ -39,6 +39,7 @@ class _EndShiftScreenState extends ConsumerState<EndShiftScreen> {
         cashSales: widget.shift.cashSalesTotal,
         payIn: widget.shift.payInTotal,
         payOut: widget.shift.payOutTotal,
+        refunds: widget.shift.refundTotal,
       );
 
   /// Live variance for the amount currently typed, or null if not a number.
@@ -146,6 +147,7 @@ class _EndShiftScreenState extends ConsumerState<EndShiftScreen> {
                         value: widget.shift.cashSalesTotal),
                     _Row(label: 'Pay-in', value: widget.shift.payInTotal),
                     _Row(label: 'Pay-out', value: widget.shift.payOutTotal),
+                    _Row(label: 'Refunds', value: widget.shift.refundTotal),
                     const Divider(height: 24),
                     _Row(
                         label: 'Expected cash',
