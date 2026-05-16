@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/sale_repository.dart';
+import '../../domain/enums.dart';
 import '../../domain/models.dart';
 import '../../providers.dart';
 import '../../shared/manager_approval.dart';
@@ -109,6 +110,31 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
       _snack('Drawer opened — no sale recorded.');
     } catch (e) {
       _snack('Could not record the no-sale: $e');
+    }
+  }
+
+  /// Records a pay-in or pay-out cash movement against [shift]. Prompts the
+  /// cashier for an amount and reason via [CashMovementDialog]. No manager
+  /// approval is required for routine cash movements.
+  Future<void> _cashMovement(Shift shift, CashEventType type) async {
+    final result = await CashMovementDialog.show(context, type);
+    if (result == null) return;
+    final cashier = ref.read(authControllerProvider)!;
+    try {
+      await ref.read(shiftRepositoryProvider).addCashMovement(
+            shiftId: shift.id,
+            userId: cashier.id,
+            type: type,
+            amount: result.amount,
+            reason: result.reason,
+          );
+      // Refresh the shift so the end-shift expected-cash stays accurate.
+      await ref.read(shiftControllerProvider.notifier).refresh();
+      if (!mounted) return;
+      final label = type == CashEventType.payIn ? 'in' : 'out';
+      _snack('Cash $label of ${formatMoney(result.amount)} recorded.');
+    } catch (e) {
+      if (mounted) _snack('Could not record the cash movement: $e');
     }
   }
 
@@ -263,10 +289,27 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () => _noSale(shift),
-                      icon: const Icon(Icons.lock_open),
-                      label: const Text('No-sale (open drawer)'),
+                    child: Wrap(
+                      spacing: 4,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => _noSale(shift),
+                          icon: const Icon(Icons.lock_open),
+                          label: const Text('No-sale (open drawer)'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () =>
+                              _cashMovement(shift, CashEventType.payIn),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Cash in'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () =>
+                              _cashMovement(shift, CashEventType.payOut),
+                          icon: const Icon(Icons.remove),
+                          label: const Text('Cash out'),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -302,6 +345,88 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The result of a confirmed [CashMovementDialog]: a parsed [amount] in cents
+/// and the cashier-supplied [reason].
+class CashMovementResult {
+  const CashMovementResult({required this.amount, required this.reason});
+  final int amount;
+  final String reason;
+}
+
+/// Small dialog that collects an amount and a reason for a pay-in / pay-out
+/// cash movement. Resolves to a [CashMovementResult], or null if cancelled.
+class CashMovementDialog extends StatefulWidget {
+  const CashMovementDialog({super.key, required this.type});
+  final CashEventType type;
+
+  static Future<CashMovementResult?> show(
+          BuildContext context, CashEventType type) =>
+      showDialog<CashMovementResult>(
+        context: context,
+        builder: (_) => CashMovementDialog(type: type),
+      );
+
+  @override
+  State<CashMovementDialog> createState() => _CashMovementDialogState();
+}
+
+class _CashMovementDialogState extends State<CashMovementDialog> {
+  final _amount = TextEditingController();
+  final _reason = TextEditingController();
+
+  @override
+  void dispose() {
+    _amount.dispose();
+    _reason.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isPayIn = widget.type == CashEventType.payIn;
+    final amount = parseMoney(_amount.text);
+    final reason = _reason.text.trim();
+    final valid = amount != null && amount > 0 && reason.isNotEmpty;
+
+    return AlertDialog(
+      title: Text(isPayIn ? 'Cash in' : 'Cash out'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _amount,
+            autofocus: true,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Amount'),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _reason,
+            decoration: const InputDecoration(labelText: 'Reason'),
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: valid
+              ? () => Navigator.of(context).pop(
+                    CashMovementResult(amount: amount, reason: reason),
+                  )
+              : null,
+          child: Text(isPayIn ? 'Record cash in' : 'Record cash out'),
+        ),
+      ],
     );
   }
 }

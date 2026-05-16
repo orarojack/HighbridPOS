@@ -90,6 +90,48 @@ void main() {
     expect(shift!.openingFloat, 10000);
   });
 
+  testWidgets('a Cash-in through the Sell screen writes a payIn cash event',
+      (tester) async {
+    _useDesktopViewport(tester);
+    final container = await _signedInContainer(tester);
+
+    // Open a shift so the Sell UI (and its cash-movement buttons) are usable.
+    final shift =
+        await container.read(shiftControllerProvider.notifier).start(5000);
+
+    await tester.pumpWidget(_host(container, const SaleScreen()));
+    await tester.pumpAndSettle();
+
+    // Open the Cash-in dialog from the cart header.
+    await tester.tap(find.widgetWithText(TextButton, 'Cash in'));
+    await tester.pumpAndSettle();
+
+    // Enter a known amount and a reason, then confirm.
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Amount'), '25.00');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Reason'), 'Change fund top-up');
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Record cash in'));
+    await tester.pumpAndSettle();
+
+    // A payIn cash event was written for 2500 cents with the reason.
+    final events = await container
+        .read(databaseProvider)
+        .select(container.read(databaseProvider).cashEvents)
+        .get();
+    final payIns =
+        events.where((e) => e.type == CashEventType.payIn.name).toList();
+    expect(payIns, hasLength(1));
+    expect(payIns.single.amount, 2500);
+    expect(payIns.single.reason, 'Change fund top-up');
+
+    // The shift's payInTotal increased by the recorded amount.
+    final updated =
+        await container.read(shiftRepositoryProvider).currentOpenShift(2);
+    expect(updated!.payInTotal, shift.payInTotal + 2500);
+  });
+
   testWidgets('ending a shift with a zero variance shows the summary',
       (tester) async {
     _useDesktopViewport(tester);
