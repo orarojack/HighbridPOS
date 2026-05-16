@@ -43,6 +43,20 @@ class CartController extends StateNotifier<List<CartLine>> {
     return true;
   }
 
+  /// Sets a fixed-cent discount on a cart line. Silently ignored if [productId]
+  /// is not in the cart. The caller is responsible for any approval checks;
+  /// the controller stores the raw cents without additional clamping (the
+  /// [CartLine] model clamps on display/calculation).
+  void setLineDiscount(int productId, int discountCents) {
+    final idx = state.indexWhere((l) => l.product.id == productId);
+    if (idx == -1) return;
+    final line = state[idx];
+    state = [
+      for (var i = 0; i < state.length; i++)
+        if (i == idx) line.copyWith(discount: discountCents) else state[i],
+    ];
+  }
+
   void removeProduct(int productId) {
     state = state.where((l) => l.product.id != productId).toList();
   }
