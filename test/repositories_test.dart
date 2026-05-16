@@ -69,6 +69,42 @@ void main() {
     );
   });
 
+  test('a failed sale rolls back completely — no partial rows, stock unchanged',
+      () async {
+    final products = ProductRepository(db);
+    final cola = (await products.search('cola')).single;
+    final water = (await products.search('water')).single;
+    final colaBefore = cola.stockQty;
+    final waterBefore = water.stockQty;
+
+    // One valid line plus one line that exceeds available stock.
+    // Await so the transaction has fully rolled back before we inspect the DB.
+    await expectLater(
+      SaleRepository(db).completeCashSale(
+        cashierId: 1,
+        lines: [
+          CartLine(product: water, qty: 1),
+          CartLine(product: cola, qty: cola.stockQty + 1),
+        ],
+        tendered: 100000,
+      ),
+      throwsA(isA<InsufficientStockException>()),
+    );
+
+    // Nothing should have been written: the transaction rolled back.
+    expect((await db.select(db.sales).get()), isEmpty);
+    expect((await db.select(db.saleItems).get()), isEmpty);
+    expect((await db.select(db.payments).get()), isEmpty);
+    final saleMovements = await (db.select(db.stockMovements)
+          ..where((m) => m.type.equals('sale')))
+        .get();
+    expect(saleMovements, isEmpty);
+
+    // Stock for both products is unchanged.
+    expect((await products.getById(cola.id)).stockQty, colaBefore);
+    expect((await products.getById(water.id)).stockQty, waterBefore);
+  });
+
   test('sale references increment per day', () async {
     final products = ProductRepository(db);
     final water = (await products.search('water')).single;
