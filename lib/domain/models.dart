@@ -254,7 +254,7 @@ class SaleRecord {
 class Shift {
   final int id;
   final int userId;
-  final int terminalId;
+  final String terminalId;
   final int openingFloat; // cents
   final ShiftStatus status;
   final DateTime openedAt;

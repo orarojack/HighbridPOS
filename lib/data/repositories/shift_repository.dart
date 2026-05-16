@@ -23,7 +23,7 @@ class ShiftRepository {
   /// Throws [ShiftAlreadyOpenException] if the user already has an open shift.
   Future<Shift> openShift({
     required int userId,
-    required int terminalId,
+    required String terminalId,
     required int openingFloat,
   }) async {
     return _db.transaction(() async {
@@ -34,7 +34,7 @@ class ShiftRepository {
       final shiftId = await _db.into(_db.shifts).insert(
             ShiftsCompanion.insert(
               userId: userId,
-              terminalId: terminalId.toString(),
+              terminalId: terminalId,
               openingFloat: openingFloat,
               status: ShiftStatus.open.name,
             ),
@@ -221,7 +221,7 @@ class ShiftRepository {
   Shift _toShift(ShiftRow row) => Shift(
         id: row.id,
         userId: row.userId,
-        terminalId: int.parse(row.terminalId),
+        terminalId: row.terminalId,
         openingFloat: row.openingFloat,
         status: ShiftStatus.fromName(row.status),
         openedAt: row.openedAt,

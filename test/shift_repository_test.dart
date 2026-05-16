@@ -21,13 +21,13 @@ void main() {
   test('openShift creates an open shift and a shiftOpen cash event', () async {
     final shift = await repo.openShift(
       userId: 1,
-      terminalId: 1,
+      terminalId: 'TILL-001',
       openingFloat: 10000,
     );
 
     expect(shift.status, ShiftStatus.open);
     expect(shift.userId, 1);
-    expect(shift.terminalId, 1);
+    expect(shift.terminalId, 'TILL-001');
     expect(shift.openingFloat, 10000);
     expect(shift.cashSalesTotal, 0);
     expect(shift.closedAt, isNull);
@@ -44,7 +44,7 @@ void main() {
 
     final opened = await repo.openShift(
       userId: 1,
-      terminalId: 1,
+      terminalId: 'TILL-001',
       openingFloat: 5000,
     );
     final current = await repo.currentOpenShift(1);
@@ -55,7 +55,7 @@ void main() {
   test('currentOpenShift returns null after the shift is closed', () async {
     final opened = await repo.openShift(
       userId: 1,
-      terminalId: 1,
+      terminalId: 'TILL-001',
       openingFloat: 5000,
     );
     await repo.closeShift(
@@ -68,9 +68,9 @@ void main() {
   });
 
   test('openShift throws when the user already has an open shift', () async {
-    await repo.openShift(userId: 1, terminalId: 1, openingFloat: 5000);
+    await repo.openShift(userId: 1, terminalId: 'TILL-001', openingFloat: 5000);
     expect(
-      () => repo.openShift(userId: 1, terminalId: 1, openingFloat: 5000),
+      () => repo.openShift(userId: 1, terminalId: 'TILL-001', openingFloat: 5000),
       throwsA(isA<ShiftAlreadyOpenException>()),
     );
   });
@@ -79,7 +79,7 @@ void main() {
       () async {
     final shift = await repo.openShift(
       userId: 1,
-      terminalId: 1,
+      terminalId: 'TILL-001',
       openingFloat: 5000,
     );
 
@@ -100,7 +100,7 @@ void main() {
       () async {
     final shift = await repo.openShift(
       userId: 1,
-      terminalId: 1,
+      terminalId: 'TILL-001',
       openingFloat: 5000,
     );
 
@@ -125,7 +125,7 @@ void main() {
       () async {
     final shift = await repo.openShift(
       userId: 1,
-      terminalId: 1,
+      terminalId: 'TILL-001',
       openingFloat: 5000,
     );
 
@@ -145,7 +145,7 @@ void main() {
   test('addCashMovement rejects a non-movement event type', () async {
     final shift = await repo.openShift(
       userId: 1,
-      terminalId: 1,
+      terminalId: 'TILL-001',
       openingFloat: 5000,
     );
     expect(
@@ -163,7 +163,7 @@ void main() {
   test('recordNoSale writes a noSale event with approvedBy set', () async {
     final shift = await repo.openShift(
       userId: 1,
-      terminalId: 1,
+      terminalId: 'TILL-001',
       openingFloat: 5000,
     );
 
@@ -189,7 +189,7 @@ void main() {
       () async {
     final shift = await repo.openShift(
       userId: 1,
-      terminalId: 1,
+      terminalId: 'TILL-001',
       openingFloat: 10000,
     );
     await repo.recordCashSale(shiftId: shift.id, userId: 1, amount: 5000);
@@ -235,7 +235,7 @@ void main() {
       () async {
     final shift = await repo.openShift(
       userId: 1,
-      terminalId: 1,
+      terminalId: 'TILL-001',
       openingFloat: 10000,
     );
     await repo.recordCashSale(shiftId: shift.id, userId: 1, amount: 5000);
